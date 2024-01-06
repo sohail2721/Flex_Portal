@@ -1,0 +1,221 @@
+﻿@page "/AddAttendance"
+@using Microsoft.AspNetCore.Components.Authorization
+@using Bismillah.Shared
+@*@using Microsoft.AspNetCore.Mvc;
+    @using Microsoft.AspNetCore.Mvc.RazorPages;*@
+@using Microsoft.AspNetCore.WebUtilities;
+@using MudBlazor
+@using Microsoft.AspNetCore.Components
+@using Microsoft.AspNetCore.Components.Web
+
+@inject AuthenticationStateProvider authstate
+@inject HttpClient http
+@inject IJSRuntime jsr
+@inject NavigationManager Navigation
+@inject NavigationManager NavigationManager
+
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: bold;
+        }
+
+        input[type="date"] {
+            padding: 0.5rem;
+            border: 1px solid #ccc;
+            border-radius: 0.25rem;
+            font-size: 1rem;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        thead th {
+            background-color: #f2f2f2;
+            color: #333;
+            font-weight: bold;
+            text-align: left;
+            padding: 10px;
+            border-bottom: 2px solid #ddd;
+        }
+
+        tbody td {
+            padding: 10px;
+            border-bottom: 1px solid #ddd;
+        }
+
+        select {
+            padding: 5px;
+            font-size: 16px;
+            border-radius: 5px;
+        }
+
+        .login-container button {
+            display: block;
+            width: 100%;
+            padding: 10px;
+            border: none;
+            border-radius: 5px;
+            background: #007bff;
+            color: #fff;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+            .login-container button:hover {
+                background: #0062cc;
+            }
+    </style>
+</head>
+<body>
+    <h1>New Attendance</h1>
+    <div class="form-group">
+        <label for="date-input">Date:</label>
+        <input class="form-control" type="date" id="date-input" name="date" @onchange="UpdateSelectedDate" min="2023-01-01">
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Roll No.</th>
+                <th>Student Name</th>
+                <th>Attendance</th>
+            </tr>
+        </thead>
+        <tbody>
+
+
+
+            @foreach (var row in StudentInfo)
+            {
+                <tr>
+                    <td>
+                        @row.Roll_NO
+                    </td>
+                    <td>  @row.First_name @row.Last_name</td>
+
+                    <td>
+                        <select @onchange="(ChangeEventArgs e) => AttendanceArray[row.Roll_NO] = e.Value.ToString()">
+
+                            <option value="P">Present</option>
+                            <option value="A">Absent</option>
+                            <option value="L">Leave</option>
+                        </select>
+
+                    </td>
+                </tr>
+
+
+            }
+
+
+        </tbody>
+    </table>
+
+    <div class="login-container">
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" Class="login-button" OnClick="@SubmitAttendance">SUBMIT</MudButton>
+    </div>
+
+
+</body>
+</html>
+
+
+@code{
+    //string[] AttendanceArray = new string[300];
+    Dictionary<string, string>AttendanceArray = new Dictionary<string, string>();
+    public int arrCounter = 0;
+    int arrsize;
+    string currentUserName;
+    public string selected { get; set; }
+    @*[BindProperty]*@
+    public DateTime selectedDate { get; set; }
+    public string formattedDate;
+    List<StudentListForAttendanceModel> StudentInfo = new List<StudentListForAttendanceModel>();
+    List<SuccessMessageModel> LastID = new List<SuccessMessageModel>();
+    AttendanceModelForSubmission system = new AttendanceModelForSubmission();
+
+    protected async override Task OnInitializedAsync()
+    {
+        ApiRequest.http = http;
+        ApiRequest.jsr = jsr;
+        var authstates = await authstate.GetAuthenticationStateAsync();
+        currentUserName = authstates.User.Identity.Name;
+        var uri = new Uri(NavigationManager.Uri);
+        var queryString = QueryHelpers.ParseQuery(uri.Query);
+        selected = queryString["selectedCourse"];
+        StudentInfo = await http.GetFromJsonAsync<List<StudentListForAttendanceModel>>($"api/FacultyDashboard/GetStudentList/{selected}/{currentUserName}");
+        foreach (var row in StudentInfo)
+        {
+            AttendanceArray[row.Roll_NO] = "P";
+            arrsize++;
+        }
+
+
+
+
+    }
+
+    private void UpdateSelectedDate(ChangeEventArgs e)
+    {
+        formattedDate = DateTime.Parse(e.Value.ToString()).ToString("dd-MMM-yyyy").ToUpper();
+        Console.WriteLine(formattedDate);
+    }
+
+
+    protected async Task SubmitAttendance()
+    {
+        SuccessMessageModel check = null;
+        int counter = 0;
+        var LastID = await http.GetFromJsonAsync<List<string>>($"api/FacultyDashboard/GetLastAid/{currentUserName}");
+
+        string numericPart = new String(LastID.ToList()[0].Where(Char.IsDigit).ToArray()); // extracts "498" from "A498"
+        int numericValue = Int32.Parse(numericPart) + 1;
+
+
+        //Console.WriteLine(arrsize);
+
+        foreach (var item in AttendanceArray)
+        {
+            string rollNo = item.Key;
+            string attendance = item.Value;
+            //Console.WriteLine(item.Key + " " + item.Value);
+
+            system.AttendanceID = "A" + numericValue.ToString();
+            numericValue++;
+            system.CourseREGID = StudentInfo.ToList()[counter].CourseREGID;
+            counter++;
+            system.Date = formattedDate;
+            system.Status = item.Value;
+            //Console.WriteLine(system.AttendanceID + " " + system.Date + " " + system.Status + " " + system.CourseREGID);
+            check = await ApiRequest.PostRequest<SuccessMessageModel>("api/FacultyDashboard/SubmitAttendance", system);
+            //Console.WriteLine(check.message);
+            await jsr.InvokeVoidAsync("writeToFile", "hello.txt", "Attendance added by " + currentUserName + " at "+ DateTime.Now.ToString() + "\n");
+
+        }
+
+        NavigationManager.NavigateTo($"/FacultyHomepage");
+
+
+    }
+
+
+}
+
+
+
+

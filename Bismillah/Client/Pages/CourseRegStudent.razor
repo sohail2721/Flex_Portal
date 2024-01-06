@@ -1,0 +1,381 @@
+﻿@page "/CourseRegStudent"
+@using Microsoft.AspNetCore.Components.Authorization
+@using Bismillah.Shared
+@using MudBlazor
+@using System.IO
+@using Microsoft.AspNetCore.Http;
+@using System.Threading
+@inject AuthenticationStateProvider authstate
+@inject HttpClient http
+@inject IJSRuntime jsr
+@inject NavigationManager Navigation
+@inject NavigationManager NavigationManager
+@inject IConfiguration Configuration
+
+<html>
+<head>
+    <style>
+        #my-alert {
+            position: fixed;
+            top: 80px;
+            right: 20px;
+            width: 450px;
+            background-color: #ffffff;
+            border: none;
+            border-radius: 4px;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+            transition: opacity 0.3s ease-in-out;
+            color: #FFA500;
+        }
+
+        .alert-container {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px;
+        }
+
+        .alert-text {
+            font-size: 16px;
+            color: #FFA500;
+        }
+
+        .close-button {
+            border: none;
+            background-color: transparent;
+            font-size: 16px;
+            color: #FFA500;
+            cursor: pointer;
+            transition: color 1.0s ease-in-out;
+        }
+
+            .close-button:hover {
+                color: #ccc;
+            }
+
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 60px;
+            height: 34px;
+        }
+
+            .switch input {
+                display: none;
+            }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            -webkit-transition: .4s;
+            transition: .4s;
+            border-radius: 17px;
+        }
+
+            .slider:before {
+                position: absolute;
+                content: "";
+                height: 26px;
+                width: 26px;
+                left: 4px;
+                bottom: 4px;
+                background-color: white;
+                -webkit-transition: .4s;
+                transition: .4s;
+                border-radius: 50%;
+            }
+
+        input:checked + .slider {
+            background-color: #2196F3;
+        }
+
+        input:focus + .slider {
+            box-shadow: 0 0 1px #2196F3;
+        }
+
+        input:checked + .slider:before {
+            -webkit-transform: translateX(26px);
+            -ms-transform: translateX(26px);
+            transform: translateX(26px);
+        }
+
+        /* Style for table */
+        table {
+            border-collapse: collapse;
+            width: 100%;
+        }
+
+
+        th, td {
+            text-align: left;
+            padding: 8px;
+            border: 1px solid #ddd;
+        }
+
+        th {
+            background-color: #4285f4;
+            color: white;
+        }
+
+        .add-attendance-button {
+            background-color: #007bff;
+            border: none;
+            color: white;
+            padding: 0.5rem 1rem;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+            .add-attendance-button:hover {
+                background-color: #0062cc;
+            }
+
+        .center {
+            text-align: center;
+        }
+        /* Style for select menu */
+        select {
+            width: 50%;
+            padding: 8px 16px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+            margin-bottom: 12px;
+            margin-left: auto;
+            margin-right: auto;
+            display: block;
+            font-size: 16px;
+            color: #555;
+            background-color: #fff;
+            appearance: none;
+            outline: none;
+            cursor: pointer;
+        }
+
+            /* Style for select menu arrow */
+            select::after {
+                content: '\25BC';
+                position: absolute;
+                top: 50%;
+                right: 10px;
+                transform: translateY(-50%);
+                color: #555;
+            }
+
+        /* Style for select menu label */
+        label[for="courses"] {
+            display: block;
+            margin-bottom: 6px;
+            text-align: center;
+            font-size: 18px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <h1>Course Registration</h1>
+    <br />
+    <br />
+
+
+    @if (isChecked == false)
+    {
+        <h3>Registration Closed</h3>
+    }
+    else
+    {
+        <label for="courses">Select Course:</label>
+        <select id="courses" name="courses" @onchange="SelectionChanged">
+            <option value="NULL">Select a course...</option>
+            @foreach (var row in OfferedCourses1)
+            {
+                <option value="@row.Course_ID">@row.Course_ID - @row.Course_Name</option>
+            }
+
+
+        </select>
+        <div id="my-alert" style="@($"display: {(showAlert ? "flex" : "none")}; opacity: {(showAlert ? 1 : 0)}")">
+            <div class="alert-container">
+                <span class="@classText"> @AlertText</span>
+                <button class="close-button" @onclick="() => HideAlert()">x</button>
+            </div>
+        </div>
+
+        <label for="courses">Select Instructor:</label>
+        <select id="courses" name="courses" @onchange="SelectionChangedFaculty">
+            <option value="NULL">Select an Instructor...</option>
+            @foreach (var row in AvailFaculty)
+            {
+                <option value="@row.FacultyID">@row.First_Name @row.Last_Name</option>
+            }
+
+
+        </select>
+        <div class="center">
+            <button @onclick="() => RegisterCourse()" class="add-attendance-button">Register Course</button>
+        </div>
+
+        <br />
+        <h3>Registered Courses</h3>
+        <br />
+        <table>
+            <thead>
+                <tr>
+                    <th>Course ID</th>
+                    <th>Course Name</th>
+                    <th>Grading Type</th>
+                    <th>Credit Hours</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var row in OfferedCourses)
+                {
+                    <tr>
+                        <td>@row.Course_ID</td>
+                        <td>@row.Course_Name</td>
+                        <td>@row.Grading_Type</td>
+                        <td>@row.Credit_Hours</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+        <br />
+    }
+
+</body>
+</html>
+
+@code{
+
+    bool alreadyReg = false;
+    int RegCount = 0;
+    bool isChecked = false;
+    string selectedCourse;
+    string selectedFaculty;
+    string currentUserName;
+    public string AlertText { get; set; }
+    public string classText { get; set; }
+
+    List<CourseRegStatus> Status = new List<CourseRegStatus>();
+    List<GetOfferedCourses> OfferedCourses = new List<GetOfferedCourses>();
+    List<GetOfferedCourses> OfferedCourses1 = new List<GetOfferedCourses>();
+    List<FacultyDetailsOne> AvailFaculty = new List<FacultyDetailsOne>();
+    SuccessMessageModel UpdateStatus = new SuccessMessageModel();
+    CourseRegModel RegNewCourse = new CourseRegModel();
+    private bool showAlert = false;
+
+    protected async override Task OnInitializedAsync()
+    {
+        ApiRequest.http = http;
+        ApiRequest.jsr = jsr;
+        var authstates = await authstate.GetAuthenticationStateAsync();
+        currentUserName = authstates.User.Identity.Name;
+        OfferedCourses = await http.GetFromJsonAsync<List<GetOfferedCourses>>($"api/StudentDashboard/GetRegisteredCourses/{currentUserName}");
+        OfferedCourses1 = await http.GetFromJsonAsync<List<GetOfferedCourses>>($"api/AdminDashboard/GetOfferedCourses");
+        Status = await http.GetFromJsonAsync<List<CourseRegStatus>>($"api/AdminDashboard/GetCourseRegStatus");
+        if (Status.ToList()[0].RegStatus == "F")
+        {
+            isChecked = false;
+        }
+        else
+        {
+            isChecked = true;
+        }
+
+    }
+
+    private async Task SelectionChanged(ChangeEventArgs args)
+    {
+
+        selectedCourse = args.Value.ToString();
+        Console.WriteLine(selectedCourse);
+        try
+        {
+            AvailFaculty = await http.GetFromJsonAsync<List<FacultyDetailsOne>>($"api/StudentDashboard/GetAvailFaculty/{selectedCourse}");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine(ex.ToString());
+        }
+
+
+    }
+    private void ShowAlert()
+    {
+        showAlert = true;
+        StateHasChanged();
+    }
+
+    private void HideAlert()
+    {
+        showAlert = false;
+        StateHasChanged();
+    }
+    private async Task SelectionChangedFaculty(ChangeEventArgs args)
+    {
+
+        selectedFaculty = args.Value.ToString();
+
+    }
+    private async Task RegisterCourse()
+    {
+        showAlert = false;
+
+        foreach (var row in OfferedCourses)
+        {
+            if (row.Course_ID == selectedCourse)
+            {
+                alreadyReg = true;
+                break;
+            }
+            RegCount++;
+        }
+        if (alreadyReg == false & RegCount < 6)
+        {
+            //Reg
+            RegNewCourse.Roll_No = currentUserName;
+            RegNewCourse.Course_ID = selectedCourse;
+            RegNewCourse.FacultyID = selectedFaculty;
+            var LastID = await http.GetFromJsonAsync<List<string>>($"api/StudentDashboard/GetLastCRID/{currentUserName}");
+            string numericPart = new String(LastID.ToList()[0].Where(Char.IsDigit).ToArray()); // extracts "498" from "A498"
+            int numericValue = Int32.Parse(numericPart) + 1;
+            RegNewCourse.CourseREGID = "C" + numericValue;
+
+            ShowAlert();
+
+            classText = "oi oi-warning alert-text";
+            AlertText = "Registration Successful";
+            await jsr.InvokeVoidAsync("eval", "document.getElementById('my-alert').style.display = 'block';");
+            // Set timer to hide alert after 5 seconds
+            await Task.Delay(5000);
+            HideAlert();
+            await jsr.InvokeVoidAsync("writeToFile", "hello.txt", "New Course Registered by " + currentUserName + " at " + DateTime.Now.ToString() + "\n");
+            await ApiRequest.PostRequest<SuccessMessageModel>("api/StudentDashboard/RegisterCourse", RegNewCourse);
+            Console.WriteLine("POSSIBLE");
+
+
+
+            NavigationManager.NavigateTo($"/StudentHomepage");
+        }
+        else
+        {
+            ShowAlert();
+            classText = "oi oi-warning alert-text";
+            AlertText = "Invalid Selection or Registration limit exceeded!";
+            await jsr.InvokeVoidAsync("eval", "document.getElementById('my-alert').style.display = 'block';");
+            // Set timer to hide alert after 5 seconds
+            await Task.Delay(5000);
+            HideAlert();
+        }
+
+    }
+
+}

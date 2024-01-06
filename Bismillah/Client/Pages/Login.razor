@@ -1,0 +1,266 @@
+﻿@page "/Login"
+@inject HttpClient http
+@inject IJSRuntime jsr
+@using Bismillah.Shared
+@inherits LayoutComponentBase
+@using MudBlazor
+@using OpenQA.Selenium;
+@using OpenQA.Selenium.Safari;
+@using Microsoft.AspNetCore.Components.Authorization;
+@using System.IO
+
+@layout NoLayout
+@inject ISnackbar Snackbar
+@inject NavigationManager NavigationManager
+@*@inject AuthenticationStateProvider authstate*@
+
+
+<html>
+<head>
+    <title>Login Page</title>
+    <link rel="stylesheet" type="text/css" href="style.css">
+
+
+
+</head>
+<body>
+   
+    <div id="my-alert" style="@($"display: {(showAlert ? "flex" : "none")}; opacity: {(showAlert ? 1 : 0)}")">
+        <div class="alert-container">
+            <span class="oi oi-warning alert-text"> Invalid Username or Password</span>
+            <button class="close-button" @onclick="() => HideAlert()">x</button>
+        </div>
+    </div>
+
+
+
+
+    @*<div class="login-container">
+            <h1>Login</h1>
+            <form>
+                <label for="username">Username:</label>
+                <input type="text" id="username" name="username" required @bind="Username">
+                <label for="password">Password:</label>
+                <input type="password" id="password" name="password" required @bind="Password">
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" Class="login-button" OnClick="@HandleLogin">Login</MudButton>
+                <br />
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" Class="login-button" OnClick="@resetP">Reset Password</MudButton>
+
+            </form>
+        </div>*@
+
+
+ 
+
+        <div class="container">
+            <div class="left-section">
+                <h1>Welcome To Flex Portal</h1>
+                <p>Login, Signup or learn more</p>
+            </div>
+            <div class="right-section">
+                <form action="#" method="POST">
+                    <div class="logo">
+                        <img src="flex-logo-blue.png" alt="Logo">
+                    </div>
+                    <div class="login-box">
+                        <h2>Login</h2>
+                        <div class="input-group">
+                            <label for="username">Username</label>
+                            <input type="text" id="username" name="username" required @bind="Username">
+                        </div>
+                        <div class="input-group">
+                            <label for="password">Password</label>
+                            <input type="password" id="password" name="password" required @bind="Password">
+                        </div>
+                        <div class="login-container">
+                            <MudButton Variant="Variant.Filled" Color="Color.Primary" Class="login-button" OnClick="@HandleLogin">Login</MudButton>
+                        </div>
+                            <div class="forgot-password">
+                                <a href="ResetPassword">Forgot password?</a>
+                            </div>
+                        </div>
+                </form>
+            </div>
+        </div>
+
+
+
+
+</body>
+
+</html>
+
+
+
+
+
+@code {
+
+
+    public string Username { get; set; } = string.Empty;
+    private string Password { get; set; } = string.Empty;
+    List<LoginModel> LoginDataStudent = new List<LoginModel>();
+    List<LoginModelFaculty> LoginDataFaculty = new List<LoginModelFaculty>();
+    List<LoginModelAdmin> LoginDataAdmin = new List<LoginModelAdmin>();
+    private string FacultyUsername { get; set; }
+    string filePath = "log.txt";
+    string logs;
+
+
+    private bool showAlert = false;
+
+    protected async override Task OnInitializedAsync()
+    {
+        ApiRequest.http = http;
+        ApiRequest.jsr = jsr;
+        MudItems.Snackbar = Snackbar;
+        await jsr.InvokeVoidAsync("localStorage.clear");
+
+    }
+
+    private void ShowAlert()
+    {
+        showAlert = true;
+        StateHasChanged();
+    }
+
+    private void HideAlert()
+    {
+        showAlert = false;
+        StateHasChanged();
+    }
+
+    protected void resetP()
+    {
+        NavigationManager.NavigateTo("/ResetPassword");
+    }
+    protected async Task HandleLogin()
+    {
+
+        //NavigationManager.NavigateTo("/StudentHomepage");
+
+        FacultyUsername = Username;
+
+        if (Username == "")
+        {
+            Console.WriteLine("KHAALI");
+            ShowAlert();
+            await jsr.InvokeVoidAsync("eval", "document.getElementById('my-alert').style.display = 'block';");
+            // Set timer to hide alert after 5 seconds
+            await Task.Delay(5000);
+            HideAlert();
+        }
+
+        else if (Char.IsDigit(Username[0]))
+        {
+            var i = await http.GetFromJsonAsync<List<int>>($"api/Auth/VerificationStudent/{Username}");
+            if (i.ToList()[0] > 0)
+            {
+                LoginDataStudent = await http.GetFromJsonAsync<List<LoginModel>>($"api/Auth/student/{Username}");
+                if (LoginDataStudent.ToList()[0].Roll_no == Username & LoginDataStudent.ToList()[0].FLEXPASSWORD == Password)
+                {
+                    Console.WriteLine(LoginDataStudent.ToList()[0].jwtbearer);
+                    await jsr.InvokeVoidAsync("localStorage.setItem", "user", LoginDataStudent.ToList()[0].jwtbearer).ConfigureAwait(false);
+                    //await jsr.InvokeVoidAsync("writeToFile", "User Logged in!");
+                    await jsr.InvokeVoidAsync("writeToFile","hello.txt","User " + Username + " Logged In at" + DateTime.Now.ToString() + " \n");
+
+                    NavigationManager.NavigateTo($"/StudentHomepage");
+                }
+                else
+                {
+                    ShowAlert();
+                    await jsr.InvokeVoidAsync("eval", "document.getElementById('my-alert').style.display = 'block';");
+                    // Set timer to hide alert after 5 seconds
+                    await Task.Delay(5000);
+                    HideAlert();
+                }
+            }
+            else
+            {
+
+                Console.WriteLine("Student User Does not exists");
+            }
+        }
+        else if (Username[0] == 'A')
+        {
+            //Admin
+
+            var i = await http.GetFromJsonAsync<List<int>>($"api/Auth/VerificationAdmin/{Username}");
+            if (i.ToList()[0] > 0)
+            {
+                LoginDataAdmin = await http.GetFromJsonAsync<List<LoginModelAdmin>>($"api/Auth/Admin/{Username}");
+                Console.WriteLine("Mein bhi Admin Hoon");
+                if (LoginDataAdmin.ToList()[0].AdminID == Username & LoginDataAdmin.ToList()[0].AdminPassword == Password)
+                {
+
+                    await jsr.InvokeVoidAsync("localStorage.setItem", "user", LoginDataAdmin.ToList()[0].jwtbearer).ConfigureAwait(false);
+                    Console.WriteLine("Admin sign in successful");
+                    await jsr.InvokeVoidAsync("writeToFile", "hello.txt", "User " + Username + " Logged In at" + DateTime.Now.ToString() + " \n");
+                    NavigationManager.NavigateTo($"/AdminHomePage");
+                }
+                else
+                {
+                    ShowAlert();
+                    await jsr.InvokeVoidAsync("eval", "document.getElementById('my-alert').style.display = 'block';");
+                    // Set timer to hide alert after 5 seconds
+                    await Task.Delay(5000);
+                    HideAlert();
+                }
+            }
+            else
+            {
+                Console.WriteLine("Admin User Does not exists");
+            }
+        }
+        else
+        {
+            var i = await http.GetFromJsonAsync<List<int>>($"api/Auth/VerificationFaculty/{FacultyUsername}");
+            if (i.ToList()[0] > 0)
+            {
+                LoginDataFaculty = await http.GetFromJsonAsync<List<LoginModelFaculty>>($"api/Auth/faculty/{FacultyUsername}");
+                if (LoginDataFaculty.ToList()[0].FacultyID == Username & LoginDataFaculty.ToList()[0].FLEXPASSWORD == Password)
+                {
+                    Console.WriteLine(LoginDataFaculty.ToList()[0].jwtbearer);
+                    await jsr.InvokeVoidAsync("localStorage.setItem", "user", LoginDataFaculty.ToList()[0].jwtbearer).ConfigureAwait(false);
+                    await jsr.InvokeVoidAsync("writeToFile", "hello.txt", "User " + Username + " Logged In at" + DateTime.Now.ToString() + " \n");
+                    NavigationManager.NavigateTo("/FacultyHomepage");
+                }
+                else
+                {
+                    ShowAlert();
+                    await jsr.InvokeVoidAsync("eval", "document.getElementById('my-alert').style.display = 'block';");
+                    // Set timer to hide alert after 5 seconds
+                    await Task.Delay(5000);
+                    HideAlert();
+                }
+            }
+            else
+            {
+                Console.WriteLine("Faculty User Does not exists");
+            }
+
+        }
+
+
+    }
+}
+
+
+@*
+
+
+
+
+
+
+
+
+    //reset password
+
+
+
+
+
+   //Logout
+    //Upload Assignment
+*@

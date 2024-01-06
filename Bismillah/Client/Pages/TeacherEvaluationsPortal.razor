@@ -1,0 +1,306 @@
+﻿@page "/TeacherEvaluationsPortal"
+@using Microsoft.AspNetCore.Components.Authorization
+@using Bismillah.Shared
+@*@using Microsoft.AspNetCore.Mvc;
+    @using Microsoft.AspNetCore.Mvc.RazorPages;*@
+@using Microsoft.AspNetCore.WebUtilities;
+@using MudBlazor
+@inject AuthenticationStateProvider authstate
+@inject HttpClient http
+@inject IJSRuntime jsr
+@inject NavigationManager Navigation
+@inject NavigationManager NavigationManager
+
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Evaluation Portal</title>
+    <style>
+
+        .form-group {
+            /*           text-align:center;*/
+            width: 500px;
+        }
+        /* Style for select menu */
+        select {
+            width: 50%;
+            padding: 8px 16px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+            margin-bottom: 12px;
+            margin-left: auto;
+            margin-right: auto;
+            display: block;
+            font-size: 16px;
+            color: #555;
+            background-color: #fff;
+            appearance: none;
+            outline: none;
+            cursor: pointer;
+        }
+
+            /* Style for select menu arrow */
+            select::after {
+                content: '\25BC';
+                position: absolute;
+                top: 50%;
+                right: 10px;
+                transform: translateY(-50%);
+                color: #555;
+            }
+        /* Style for select menu label */
+        label[for="courses"] {
+            display: block;
+            margin-bottom: 6px;
+            text-align: center;
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+
+
+        .add-attendance-button {
+            background-color: #007bff;
+            border: none;
+            color: white;
+            padding: 0.5rem 1rem;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+            .add-attendance-button:hover {
+                background-color: #0062cc;
+            }
+
+        .center {
+            text-align: center;
+        }
+
+        #my-alert {
+            position: fixed;
+            top: 80px;
+            right: 20px;
+            width: 300px;
+            background-color: #ffffff;
+            border: none;
+            border-radius: 4px;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+            transition: opacity 0.3s ease-in-out;
+            color: #fff;
+        }
+
+        .alert-container {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px;
+        }
+
+        .alert-text {
+            font-size: 16px;
+            color: #FFA500;
+        }
+
+        .close-button {
+            border: none;
+            background-color: transparent;
+            font-size: 16px;
+            color: #fff;
+            cursor: pointer;
+            transition: color 1.0s ease-in-out;
+        }
+
+            .close-button:hover {
+                color: #ccc;
+            }
+    </style>
+</head>
+<body>
+    <h1>Evaluation Management</h1>
+
+    <div id="my-alert" style="@($"display: {(showAlert ? "flex" : "none")}; opacity: {(showAlert ? 1 : 0)}")">
+        <div class="alert-container">
+            <span class="oi oi-warning alert-text"> Invalid Selection</span>
+            <button class="close-button" @onclick="() => HideAlert()">x</button>
+        </div>
+    </div>
+
+    <label for="courses">Select Course:</label>
+    <select id="courses" name="courses" @onchange="SelectionChanged">
+        <option value="NULL">Select a course...</option>
+
+        @foreach (var row in RegisteredCoursesData)
+        {
+            <option value="@row.Course_ID">@row.Course_ID - @row.Course_Name</option>
+        }
+
+    </select>
+
+    <label for="courses">Select Evaluation Type:</label>
+    <select id="courses" name="courses" @onchange="SelectionChangedEval">
+        <option value="NULL">Select a Evaluation Type...</option>
+
+        @foreach (var row in EvalSystem)
+        {
+            <option value="@row.EvalType">@row.EvalType</option>
+        }
+
+
+    </select>
+    <br />
+    <div class="center">
+        <button @onclick="() => NavigateToEvaluationUpdate(selectedCourse)" class="add-attendance-button">View/Update Evaluation</button>
+    </div>
+    <br />
+
+    <label for="courses">Select Course:</label>
+    <select id="courses" name="courses" @onchange="SelectionChanged">
+        <option value="NULL">Select a course...</option>
+
+        @foreach (var row in RegisteredCoursesData)
+        {
+            <option value="@row.Course_ID">@row.Course_ID - @row.Course_Name</option>
+        }
+
+    </select>
+
+    <label for="courses">Select Evaluation Type:</label>
+    <select id="courses" name="courses" @onchange="SelectionChangedEval">
+        <option value="NULL">Select a Evaluation Type...</option>
+
+        @foreach (var row in EvalSystem)
+        {
+            <option value="@row.EvalType">@row.EvalType</option>
+        }
+
+
+    </select>
+
+    <label for="courses">Select Max Score to add new evaluation:</label>
+    <select id="courses" name="courses" @onchange="SelectionChangedMaxScore">
+        <option value="NULL">Select Max Score...</option>
+        @for (int i = 0; i < 100; i++)
+        {
+            <option value="@(i+1)">@(i+1)</option>
+        }
+    </select>
+    <label for="courses">Select Date:</label>
+
+    <div style="display: flex; justify-content: center;">
+        <div class="form-group">
+            <input class="form-control" type="date" id="date-input" name="date" @onchange="UpdateSelectedDate" min="2023-01-01">
+        </div>
+    </div>
+    <br />
+    <div class="center">
+
+        <button @onclick="() => NavigateToEvaluationAdd(selectedCourse)" class="add-attendance-button">Add Evaluation</button>
+    </div>
+
+</body>
+</html>
+
+@code{
+    string currentUserName;
+    string selectedCourse;
+    List<GetCoursesInfoModel> RegisteredCoursesData = new List<GetCoursesInfoModel>();
+    public string selectedEval { get; set; }
+    public string MaxScore { get; set; }
+    public DateTime selectedDate { get; set; }
+    public string formattedDate;
+    private bool showAlert = false;
+    List<EvalTypeModel> EvalSystem = new List<EvalTypeModel>();
+    EvaluationModel NewEvalSystem = new EvaluationModel();
+    SuccessMessageModel check = new SuccessMessageModel();
+    protected async override Task OnInitializedAsync()
+    {
+        ApiRequest.http = http;
+        ApiRequest.jsr = jsr;
+        var authstates = await authstate.GetAuthenticationStateAsync();
+        currentUserName = authstates.User.Identity.Name;
+        RegisteredCoursesData = await http.GetFromJsonAsync<List<GetCoursesInfoModel>>($"api/FacultyDashboard/GetRegisteredCourses/{currentUserName}");
+        EvalSystem = await http.GetFromJsonAsync<List<EvalTypeModel>>($"api/FacultyDashboard/GetEvalType");
+        selectedEval = "";
+        selectedCourse = "";
+        MaxScore = "";
+        formattedDate = "";
+    }
+    private void ShowAlert()
+    {
+        showAlert = true;
+        StateHasChanged();
+    }
+
+    private void HideAlert()
+    {
+        showAlert = false;
+        StateHasChanged();
+    }
+    private void UpdateSelectedDate(ChangeEventArgs e)
+    {
+        formattedDate = DateTime.Parse(e.Value.ToString()).ToString("dd-MMM-yyyy").ToUpper();
+        Console.WriteLine(formattedDate);
+    }
+    private async Task SelectionChanged(ChangeEventArgs args)
+    {
+        selectedCourse = args.Value.ToString();
+    }
+    private async Task SelectionChangedEval(ChangeEventArgs args)
+    {
+        selectedEval = args.Value.ToString();
+
+    }
+    private async Task SelectionChangedMaxScore(ChangeEventArgs args)
+    {
+        MaxScore = args.Value.ToString();
+
+    }
+    private async Task NavigateToEvaluationUpdate(string selectedCourse)
+    {
+        if (selectedCourse == string.Empty | selectedEval == string.Empty)
+        {
+            ShowAlert();
+            await jsr.InvokeVoidAsync("eval", "document.getElementById('my-alert').style.display = 'block';");
+            // Set timer to hide alert after 5 seconds
+            await Task.Delay(3000);
+            HideAlert();
+        }
+        else
+        {
+            NavigationManager.NavigateTo($"/UpdateEvaluations?selectedCourse={selectedCourse}&selectedEval={selectedEval}");
+        }
+
+    }
+    private async Task NavigateToEvaluationAdd(string selectedCourse)
+    {
+        if (selectedCourse == string.Empty | selectedEval == string.Empty | MaxScore == string.Empty | formattedDate == string.Empty)
+        {
+            ShowAlert();
+            await jsr.InvokeVoidAsync("eval", "document.getElementById('my-alert').style.display = 'block';");
+            // Set timer to hide alert after 5 seconds
+            await Task.Delay(3000);
+            HideAlert();
+        }
+        else
+        {
+            var LastID = await http.GetFromJsonAsync<List<string>>($"api/FacultyDashboard/GetLastEid/{currentUserName}");
+            string numericPart = new String(LastID.ToList()[0].Where(Char.IsDigit).ToArray()); // extracts Number part from ID
+            int numericValue = Int32.Parse(numericPart) + 1;
+
+            NewEvalSystem.EvalDate = formattedDate;
+            NewEvalSystem.EvalType = selectedEval;
+            NewEvalSystem.EvaluationID = "E" + numericValue.ToString();
+            NewEvalSystem.MaxScore = MaxScore;
+            NewEvalSystem.FacultyID = currentUserName;
+            Console.WriteLine("masc" + NewEvalSystem.MaxScore);
+            check = await ApiRequest.PostRequest<SuccessMessageModel>("api/FacultyDashboard/AddNewEvaluation", NewEvalSystem);
+            await jsr.InvokeVoidAsync("writeToFile", "hello.txt", "New Evaluation added by " + currentUserName + " at " + DateTime.Now.ToString() + "\n");
+            NavigationManager.NavigateTo($"/AddEvaluations?selectedCourse={selectedCourse}&selectedEval={selectedEval}&MaxScore={MaxScore}");
+        }
+    }
+}

@@ -1,0 +1,163 @@
+﻿@inject NavigationManager Navigation
+@using System.Text.RegularExpressions;
+@using Microsoft.AspNetCore.Components.Authorization
+@using Bismillah.Shared
+@using Bismillah.Client
+@using System.IdentityModel.Tokens.Jwt
+@inject AuthenticationStateProvider authstates
+
+
+
+@if (Char.IsDigit(currentUsername[0]))
+{
+    <div class="top-row ps-3 navbar navbar-dark">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="StudentHomepage">Flex Student Portal</a>
+            <button title="Navigation menu" class="navbar-toggler" @onclick="ToggleNavMenu">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+        </div>
+    </div>
+
+    <div class="@NavMenuCssClass nav-scrollable" @onclick="ToggleNavMenu">
+        <nav class="flex-column">
+            <div class="nav-item px-3">
+                <NavLink class="nav-link" href="StudentHomepage" Match="NavLinkMatch.All">
+                    <span class="oi oi-home" aria-hidden="true"></span> Home
+                </NavLink>
+            </div>
+            <div class="nav-item px-3">
+                <NavLink class="nav-link" href="StudentAttendancePortal">
+                    <span class="oi oi-plus" aria-hidden="true"></span> Attendance
+                </NavLink>
+            </div>
+            <div class="nav-item px-3">
+                <NavLink class="nav-link" href="StudentEvaluations">
+                    <span class="oi oi-list-rich" aria-hidden="true"></span> Marks
+                </NavLink>
+            </div>
+            <div class="nav-item px-3">
+                <NavLink class="nav-link" href="Transcripts">
+                    <span class="oi oi-document" aria-hidden="true"></span> Grades
+                </NavLink>
+            </div>
+            <div class="nav-item px-3">
+                <NavLink class="nav-link" href="CourseRegStudent">
+                    <span class="oi oi-plus" aria-hidden="true"></span> Course Registration
+                </NavLink>
+            </div>
+            <div class="nav-item px-3">
+                <NavLink class="nav-link" href="CourseFeedback">
+                    <span class="oi oi-pencil" aria-hidden="true"></span> Course Feedback
+                </NavLink>
+            </div>
+        </nav>
+    </div>
+
+}
+
+else if (currentUsername[0] == 'A')
+{
+    <div class="top-row ps-3 navbar navbar-dark">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="AdminHomepage">Flex Admin Portal</a>
+            <button title="Navigation menu" class="navbar-toggler" @onclick="ToggleNavMenu">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+        </div>
+    </div>
+
+    <div class="@NavMenuCssClass nav-scrollable" @onclick="ToggleNavMenu">
+        <nav class="flex-column">
+            <div class="nav-item px-3">
+                <NavLink class="nav-link" href="AdminHomePage" Match="NavLinkMatch.All">
+                    <span class="oi oi-home" aria-hidden="true"></span> Home
+                </NavLink>
+            </div>
+            <div class="nav-item px-3">
+                <NavLink class="nav-link" href="CourseRegAdmin">
+                    <span class="oi oi-plus" aria-hidden="true"></span> Course Registration
+                </NavLink>
+            </div>
+            <div class="nav-item px-3">
+                <NavLink class="nav-link" href="CourseAllocation">
+                    <span class="oi oi-list-rich" aria-hidden="true"></span> Course Allocation
+                </NavLink>
+            </div>
+            <div class="nav-item px-3">
+                <NavLink class="nav-link" href="AdminReports">
+                    <span class="oi oi-document" aria-hidden="true"></span> Reports
+                </NavLink>
+            </div>
+            <div class="nav-item px-3">
+                <NavLink class="nav-link" href="GetLog">
+                    <span class="oi oi-list-rich" aria-hidden="true"></span> View Log
+                </NavLink>
+            </div>
+        </nav>
+    </div>
+}
+
+else
+{
+    <div class="top-row ps-3 navbar navbar-dark">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="FacultyHomepage">Flex Faculty Portal</a>
+            <button title="Navigation menu" class="navbar-toggler" @onclick="ToggleNavMenu">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+        </div>
+    </div>
+    <div class="@NavMenuCssClass nav-scrollable" @onclick="ToggleNavMenu">
+        <nav class="flex-column">
+            <div class="nav-item px-3">
+                <NavLink class="nav-link" href="FacultyHomepage" Match="NavLinkMatch.All">
+                    <span class="oi oi-home" aria-hidden="true"></span> Home
+                </NavLink>
+            </div>
+            <div class="nav-item px-3">
+                <NavLink class="nav-link" href="FacultyAttendancePortal">
+                    <span class="oi oi-plus" aria-hidden="true"></span> Attendance Portal
+                </NavLink>
+            </div>
+            <div class="nav-item px-3">
+                <NavLink class="nav-link" href="TeacherEvaluationsPortal">
+                    <span class="oi oi-list-rich" aria-hidden="true"></span> Evaluations
+                </NavLink>
+            </div>
+            <div class="nav-item px-3">
+                <NavLink class="nav-link" href="FacultyReports">
+                    <span class="oi oi-document" aria-hidden="true"></span> Reports
+                </NavLink>
+            </div>
+            <div class="nav-item px-3">
+                <NavLink class="nav-link" href="FacultyFeedback">
+                    <span class="oi oi-pencil" aria-hidden="true"></span> Course Feedback
+                </NavLink>
+            </div>
+        </nav>
+    </div>
+}
+@code {
+    private bool collapseNavMenu = true;
+
+
+    string currentUsername = "   ";
+    private string? NavMenuCssClass => collapseNavMenu ? "collapse" : null;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await authstates.GetAuthenticationStateAsync();
+        currentUsername = authState.User.Identity.Name;
+        Console.WriteLine(currentUsername);
+
+
+    }
+
+    private void ToggleNavMenu()
+    {
+
+        collapseNavMenu = !collapseNavMenu;
+    }
+}
+

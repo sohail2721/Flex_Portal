@@ -1,0 +1,258 @@
+﻿* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    padding: 0;
+    font-family: Arial, sans-serif;
+    background-color: #fff;
+}
+
+.container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    animation: fadein 2s;
+}
+
+.left-section {
+    width: 80%;
+    height: 100%;
+    background-image: url('pcit.jpg');
+    background-size: cover;
+    background-position: center;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    font-family: "Montserrat", Arial, Helvetica, sans-serif;
+    padding: 0 20px;
+    color: #fff;
+    transform: scale(1.2) translateX(-200px);
+}
+
+
+    .left-section h1 {
+        font-size: 48px;
+        margin-bottom: 20px;
+    }
+
+    .left-section p {
+        font-size: 24px;
+    }
+
+.right-section {
+    flex: 1;
+    width: 100%;
+    padding: 30px 20px;
+    background-color: #fff;
+    /* box-shadow: 0px 0px 20px 0px rgba(0, 0, 0, 0.2); */
+}
+
+.logo {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+    .logo img {
+        max-width: 100%;
+        height: auto;
+    }
+
+.login-box {
+    margin-top: 20px;
+}
+
+h2 {
+    font-size: 24px;
+    margin-bottom: 20px;
+}
+
+.input-group {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 20px;
+}
+
+label {
+    font-size: 18px;
+    margin-bottom: 5px;
+}
+
+input[type="text"],
+input[type="password"],
+textarea {
+    width: 100%;
+    padding: 10px;
+    border: none;
+    border-radius: 5px;
+    margin-bottom: 10px;
+    box-sizing: border-box;
+    background-color: #F7F7F7;
+    box-shadow: 0px 0px 5px rgba(0, 0, 0, 0.1);
+    font-size: 16px;
+    color: #333;
+}
+
+button[type="submit"] {
+    background-color: #0062cc;
+    color: #fff;
+    border: none;
+    border-radius: 5px;
+    padding: 10px 20px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: all 0.3s ease-in-out;
+    box-shadow: 0px 0px 5px rgba(0, 0, 0, 0.1);
+}
+
+    button[type="submit"]:hover {
+        background-color: #398038;
+    }
+
+
+.forgot-password {
+    text-align: right;
+    margin-top: 10px;
+}
+
+    .forgot-password a {
+        color: #0062cc;
+        text-decoration: none;
+    }
+
+        .forgot-password a:hover {
+            text-decoration: underline;
+        }
+
+@media screen and (max-width: 1024px) {
+    .container {
+        flex-direction: column;
+    }
+
+    .left-section {
+        height: 50vh;
+        padding: 20px;
+    }
+
+        .left-section h1 {
+            font-size: 36px;
+        }
+
+        .left-section p {
+            font-size: 18px;
+        }
+
+    .right-section {
+        width: 100%;
+        padding: 20px;
+    }
+}
+
+@keyframes fadein {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+.login-container {
+    width: 400px;
+    margin: 100px auto;
+    background: #fff;
+    padding: 20px;
+    border-radius: 5px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+}
+
+#my-alert {
+    position: fixed;
+    top: 80px;
+    left: 20px;
+    width: 300px;
+    background-color: #ffffff;
+    border: none;
+    border-radius: 4px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+    transition: opacity 0.3s ease-in-out;
+    color: #fff;
+}
+
+.alert-container {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px;
+}
+
+.alert-text {
+    font-size: 16px;
+    color: #FFA500;
+}
+
+.close-button {
+    border: none;
+    background-color: transparent;
+    font-size: 16px;
+    color: #fff;
+    cursor: pointer;
+    transition: color 1.0s ease-in-out;
+}
+
+    .close-button:hover {
+        color: #ccc;
+    }
+
+
+.login-container h1 {
+    text-align: center;
+    font-size: 24px;
+    margin-bottom: 20px;
+}
+
+.login-container label {
+    display: block;
+    font-size: 16px;
+    margin-bottom: 5px;
+}
+
+.login-container input[type="text"],
+.login-container input[type="password"] {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 20px;
+    border-radius: 5px;
+    border: none;
+    background: #f2f2f2;
+    color: #333;
+    font-size: 16px;
+}
+
+.login-container button {
+    display: block;
+    width: 100%;
+    padding: 10px;
+    border: none;
+    border-radius: 5px;
+    background: #007bff;
+    color: #fff;
+    font-size: 16px;
+    cursor: pointer;
+}
+
+    .login-container button:hover {
+        background: #0062cc;
+    }
+
+.container-fluid {
+    background: #0062cc;
+}
+
+.navbar-expand-lg {
+    background: #0062cc;
+}

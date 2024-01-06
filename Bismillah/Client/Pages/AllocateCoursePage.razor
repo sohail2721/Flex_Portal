@@ -1,0 +1,237 @@
+﻿@page "/AllocateCoursePage"
+@using Microsoft.AspNetCore.Components.Authorization
+@using Bismillah.Shared
+@using MudBlazor
+@inject AuthenticationStateProvider authstate
+@inject HttpClient http
+@inject IJSRuntime jsr
+@inject NavigationManager Navigation
+@inject NavigationManager NavigationManager
+
+<html>
+<head>
+    <style>
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 60px;
+            height: 34px;
+        }
+
+            .switch input {
+                display: none;
+            }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            -webkit-transition: .4s;
+            transition: .4s;
+            border-radius: 17px;
+        }
+
+            .slider:before {
+                position: absolute;
+                content: "";
+                height: 26px;
+                width: 26px;
+                left: 4px;
+                bottom: 4px;
+                background-color: white;
+                -webkit-transition: .4s;
+                transition: .4s;
+                border-radius: 50%;
+            }
+
+        input:checked + .slider {
+            background-color: #2196F3;
+        }
+
+        input:focus + .slider {
+            box-shadow: 0 0 1px #2196F3;
+        }
+
+        input:checked + .slider:before {
+            -webkit-transform: translateX(26px);
+            -ms-transform: translateX(26px);
+            transform: translateX(26px);
+        }
+
+        /* Style for table */
+        table {
+            border-collapse: collapse;
+            width: 100%;
+        }
+
+
+        th, td {
+            text-align: left;
+            padding: 8px;
+            border: 1px solid #ddd;
+        }
+
+        th {
+            background-color: #4285f4;
+            color: white;
+        }
+
+        .add-attendance-button {
+            background-color: #007bff;
+            border: none;
+            color: white;
+            padding: 0.5rem 1rem;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+            .add-attendance-button:hover {
+                background-color: #0062cc;
+            }
+
+        .center {
+            text-align: center;
+        }
+        /* Style for select menu */
+        select {
+            width: 50%;
+            padding: 8px 16px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+            margin-bottom: 12px;
+            margin-left: auto;
+            margin-right: auto;
+            display: block;
+            font-size: 16px;
+            color: #555;
+            background-color: #fff;
+            appearance: none;
+            outline: none;
+            cursor: pointer;
+        }
+
+            /* Style for select menu arrow */
+            select::after {
+                content: '\25BC';
+                position: absolute;
+                top: 50%;
+                right: 10px;
+                transform: translateY(-50%);
+                color: #555;
+            }
+
+        /* Style for select menu label */
+        label[for="courses"] {
+            display: block;
+            margin-bottom: 6px;
+            text-align: center;
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+        .login-container button {
+            display: block;
+            width: 100%;
+            padding: 10px;
+            border: none;
+            border-radius: 5px;
+            background: #007bff;
+            color: #fff;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+            .login-container button:hover {
+                background: #0062cc;
+            }
+    </style>
+</head>
+<body>
+    <h1>Allocate New Course</h1>
+    <br />
+    <br />
+    <label for="courses">Select Faculty Member:</label>
+    <select id="courses" name="courses" @onchange="SelectionChangedFaculty">
+        <option value="NULL">Select a Faculty Member...</option>
+        @foreach (var row in Details)
+        {
+            <option value="@row.FacultyID">@row.FacultyID - @row.First_name @row.Last_name</option>
+        }
+
+    </select>
+
+    <br />
+    <label for="courses">Select Course:</label>
+    <select id="courses" name="courses" @onchange="SelectionChanged">
+        <option value="NULL">Select a Course...</option>
+        @foreach (var row in OfferedCourses)
+        {
+            <option value="@row.Course_ID">@row.Course_ID - @row.Course_Name</option>
+        }
+
+    </select>
+
+    <div class="login-container">
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" Class="login-button" OnClick="@Submit">Allocate</MudButton>
+    </div>
+</body>
+</html>
+
+@code{
+
+    string selectedCourse;
+    string selectedFacultyMember;
+    List<FacultyDetails> Details = new List<FacultyDetails>();
+    List<GetOfferedCourses> OfferedCourses = new List<GetOfferedCourses>();
+    FacultyDetails NewAllocation = new FacultyDetails();
+    protected async override Task OnInitializedAsync()
+    {
+        ApiRequest.http = http;
+        ApiRequest.jsr = jsr;
+        Details = await http.GetFromJsonAsync<List<FacultyDetails>>($"api/AdminDashboard/GetFacultyDetails");
+        OfferedCourses = await http.GetFromJsonAsync<List<GetOfferedCourses>>($"api/AdminDashboard/GetOfferedCourses");
+
+    }
+    private void SelectionChanged(ChangeEventArgs args)
+    {
+        selectedCourse = args.Value.ToString();
+
+    }
+    private void SelectionChangedFaculty(ChangeEventArgs args)
+    {
+        selectedFacultyMember = args.Value.ToString();
+
+    }
+    private async Task Submit()
+    {
+        var i = await http.GetFromJsonAsync<List<int>>($"api/AdminDashboard/NewAllocationValidation/{selectedFacultyMember}/{selectedCourse}");
+        var j = await http.GetFromJsonAsync<List<int>>($"api/AdminDashboard/NoMoreThanThreeValidation/{selectedFacultyMember}");
+
+        if (i.ToList()[0] > 0 | j.ToList()[0] >= 3)
+        {
+
+            Console.WriteLine("Faculty Member with this course already exists Already exists or Course Limit Exceeded");
+
+            NavigationManager.NavigateTo($"/CourseAllocation");
+        }
+        else
+        {
+            NewAllocation.Course_ID = selectedCourse;
+            NewAllocation.FacultyID = selectedFacultyMember;
+            NewAllocation.First_name = selectedFacultyMember + " " + selectedCourse;
+            await ApiRequest.PostRequest<SuccessMessageModel>("api/AdminDashboard/AddNewAllocation", NewAllocation);
+            Console.WriteLine("SUCCESS");
+            NavigationManager.NavigateTo($"/CourseAllocation");
+
+        }
+
+    }
+}

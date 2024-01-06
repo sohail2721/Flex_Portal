@@ -1,0 +1,164 @@
+﻿@page "/StudentAttendancePortal"
+@using Microsoft.AspNetCore.Components.Authorization
+@using Bismillah.Shared
+@inject AuthenticationStateProvider authstate
+@inject HttpClient http
+@inject IJSRuntime jsr
+@inject NavigationManager Navigation
+@inject NavigationManager NavigationManager
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <style>
+        .attendance-container {
+            margin: 20px auto;
+            width: 90%;
+            max-width: 800px;
+            background-color: #fff;
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .attendance-header {
+            background-color: #4285f4;
+            color: #fff;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .attendance-body {
+            padding: 20px;
+        }
+
+        .attendance-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+            .attendance-table th,
+            .attendance-table td {
+                text-align: center;
+                padding: 10px;
+                border: 1px solid #ddd;
+            }
+
+            .attendance-table th {
+                background-color: #f2f2f2;
+                font-weight: bold;
+            }
+
+            .attendance-table tr:nth-child(even) {
+                background-color: #f2f2f2;
+            }
+
+            .attendance-table tr:hover {
+                background-color: #ddd;
+            }
+
+            .attendance-table td:last-child {
+                font-weight: bold;
+                color: #4285f4;
+            }
+        select {
+            width: 50%;
+            padding: 8px 16px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+            margin-bottom: 12px;
+            margin-left: auto;
+            margin-right: auto;
+            display: block;
+            font-size: 16px;
+            color: #555;
+            background-color: #fff;
+            appearance: none;
+            outline: none;
+            cursor: pointer;
+        }
+
+            /* Style for select menu arrow */
+            select::after {
+                content: '\25BC';
+                position: absolute;
+                top: 50%;
+                right: 10px;
+                transform: translateY(-50%);
+                color: #555;
+            }
+
+        /* Style for select menu label */
+        label[for="courses"] {
+            display: block;
+            margin-bottom: 6px;
+            text-align: center;
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+    </style>
+</head>
+<body>
+    <div class="attendance-container">
+        <div class="attendance-header">
+            <h2>Attendance Record</h2>
+        </div>
+        <label for="courses">Select Course:</label>
+        <select id="courses" name="courses" @onchange="SelectionChanged">
+            <option value="NULL">Select a course...</option>
+            @foreach (var row in AttendanceData)
+            {
+                <option value="@row.Course_ID">@row.Course_ID</option>
+            }
+
+        </select>
+        <div class="attendance-body">
+            <table class="attendance-table">
+                <thead>
+                    <tr>
+                        <th>Course</th>
+                        <th>Date</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var row in AttendanceData)
+                    {
+                        @if (row.Course_ID == selectedCourse)
+                        {
+                            <tr>
+
+                                <td>@row.Course_ID</td>
+                                <td>@row.Date</td>
+                                <td>@row.Status</td>
+
+                            </tr>
+                        }
+                    }
+
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</body>
+</html>
+
+@code{
+    string currentUserName;
+    string selectedCourse;
+    List<AttendanceModel> AttendanceData = new List<AttendanceModel>();
+    protected async override Task OnInitializedAsync()
+    {
+        var authstates = await authstate.GetAuthenticationStateAsync();
+        currentUserName = authstates.User.Identity.Name;
+        AttendanceData = await http.GetFromJsonAsync<List<AttendanceModel>>($"api/StudentDashboard/GetAttendance/{currentUserName}");
+
+    }
+    private void SelectionChanged(ChangeEventArgs args)
+    {
+        selectedCourse = args.Value.ToString();
+
+    }
+}

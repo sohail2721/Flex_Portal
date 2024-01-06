@@ -1,0 +1,189 @@
+﻿@page "/AddNewCourse"
+@using Microsoft.AspNetCore.Components.Authorization
+@using Bismillah.Shared
+@*@using Microsoft.AspNetCore.Mvc;
+    @using Microsoft.AspNetCore.Mvc.RazorPages;*@
+@using Microsoft.AspNetCore.WebUtilities;
+@using MudBlazor
+@using System.Globalization;
+@inject AuthenticationStateProvider authstate
+@inject HttpClient http
+@inject IJSRuntime jsr
+@inject NavigationManager Navigation
+@inject NavigationManager NavigationManager
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Course Information</title>
+    <style>
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        input[type="text"], select {
+            padding: 5px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+            font-size: 16px;
+            width: 100%;
+            box-sizing: border-box;
+            margin-bottom: 10px;
+        }
+
+        input[type="submit"] {
+            background-color: #007bff;
+            color: white;
+            padding: 10px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+            input[type="submit"]:hover {
+                background-color: #0062cc;
+            }
+
+        .login-container button {
+            display: block;
+            width: 100%;
+            padding: 10px;
+            border: none;
+            border-radius: 5px;
+            background: #007bff;
+            color: #fff;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+            .login-container button:hover {
+                background: #0062cc;
+            }
+        #my-alert {
+            position: fixed;
+            top: 80px;
+            right: 20px;
+            width: 300px;
+            background-color: #ffffff;
+            border: none;
+            border-radius: 4px;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+            transition: opacity 0.3s ease-in-out;
+            color: #fff;
+        }
+
+        .alert-container {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px;
+        }
+
+        .alert-text {
+            font-size: 16px;
+            color: #FFA500;
+        }
+
+        .close-button {
+            border: none;
+            background-color: transparent;
+            font-size: 16px;
+            color: #fff;
+            cursor: pointer;
+            transition: color 1.0s ease-in-out;
+        }
+
+            .close-button:hover {
+                color: #ccc;
+            }
+    </style>
+</head>
+<body>
+    <h1>Add New Course</h1>
+    <div id="my-alert" style="@($"display: {(showAlert ? "flex" : "none")}; opacity: {(showAlert ? 1 : 0)}")">
+        <div class="alert-container">
+            <span class="oi oi-warning alert-text"> Course Already Exists</span>
+            <button class="close-button" @onclick="() => HideAlert()">x</button>
+        </div>
+    </div>
+    <form>
+        <label for="course-id">Course ID:</label>
+        <input type="text" id="course-id" name="course-id" required @bind="selectedCourse">
+
+        <label for="course-name">Course Name:</label>
+        <input type="text" id="course-name" name="course-name" required @bind="courseName">
+
+        <label for="grading-type">Grading Type:</label>
+        <select id="grading-type" name="grading-type" required @bind="GradingType">
+            <option value="">--Select--</option>
+            <option value="Relative">Relative</option>
+            <option value="Absolute">Absolute</option>
+        </select>
+
+        <label for="credit-hours">Credit Hours:</label>
+        <input type="text" id="credit-hours" name="credit-hours" required @bind="CreditHours">
+        <br />
+        <div class="login-container">
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" Class="login-button" OnClick="@Submit">Submit</MudButton>
+        </div>
+    </form>
+</body>
+</html>
+
+@code{
+    string selectedCourse;
+    string courseName;
+    string GradingType;
+    string CreditHours;
+    private bool showAlert = false;
+    GetOfferedCourses addSystem = new GetOfferedCourses();
+    protected async override Task OnInitializedAsync()
+    {
+
+        ApiRequest.http = http;
+        ApiRequest.jsr = jsr;
+
+    }
+    private void ShowAlert()
+    {
+        showAlert = true;
+        StateHasChanged();
+    }
+
+    private void HideAlert()
+    {
+        showAlert = false;
+        StateHasChanged();
+    }
+    protected async Task Submit()
+    {
+        var i = await http.GetFromJsonAsync<List<int>>($"api/AdminDashboard/AddNewCourseValidation/{selectedCourse}");
+        if (i.ToList()[0] > 0)
+        {
+            ShowAlert();
+            await jsr.InvokeVoidAsync("eval", "document.getElementById('my-alert').style.display = 'block';");
+            // Set timer to hide alert after 5 seconds
+            await Task.Delay(3000);
+            HideAlert();
+            //NavigationManager.NavigateTo($"/CourseRegAdmin");
+        }
+        else
+        {
+            addSystem.Course_ID = selectedCourse;
+            addSystem.Course_Name = courseName;
+            addSystem.Credit_Hours = CreditHours;
+            addSystem.Grading_Type = GradingType;
+
+            await ApiRequest.PostRequest<SuccessMessageModel>("api/AdminDashboard/AddNewCourse", addSystem);
+            await jsr.InvokeVoidAsync("writeToFile", "hello.txt", "Course added by admin at " + DateTime.Now.ToString() + "\n");
+            NavigationManager.NavigateTo($"/CourseRegAdmin");
+        }
+
+    }
+
+
+
+
+}

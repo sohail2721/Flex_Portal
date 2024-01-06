@@ -1,0 +1,246 @@
+﻿@page "/UpdateEvaluations"
+@using Microsoft.AspNetCore.Components.Authorization
+@using Bismillah.Shared
+@*@using Microsoft.AspNetCore.Mvc;
+    @using Microsoft.AspNetCore.Mvc.RazorPages;*@
+@using Microsoft.AspNetCore.WebUtilities;
+@using MudBlazor
+@using System.Globalization;
+@inject AuthenticationStateProvider authstate
+@inject HttpClient http
+@inject IJSRuntime jsr
+@inject NavigationManager Navigation
+@inject NavigationManager NavigationManager
+
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: bold;
+        }
+
+        input[type="date"] {
+            padding: 0.5rem;
+            border: 1px solid #ccc;
+            border-radius: 0.25rem;
+            font-size: 1rem;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        thead th {
+            background-color: #f2f2f2;
+            color: #333;
+            font-weight: bold;
+            text-align: left;
+            padding: 10px;
+            border-bottom: 2px solid #ddd;
+        }
+
+        tbody td {
+            padding: 10px;
+            border-bottom: 1px solid #ddd;
+        }
+
+        select {
+            padding: 5px;
+            font-size: 16px;
+            border-radius: 5px;
+        }
+
+        .login-container button {
+            display: block;
+            width: 100%;
+            padding: 10px;
+            border: none;
+            border-radius: 5px;
+            background: #007bff;
+            color: #fff;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+            .login-container button:hover {
+                background: #0062cc;
+            }
+
+        /* Style for select menu */
+        select {
+            width: 50%;
+            padding: 8px 16px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+            margin-bottom: 12px;
+            margin-left: auto;
+            margin-right: auto;
+            display: block;
+            font-size: 16px;
+            color: #555;
+            background-color: #fff;
+            appearance: none;
+            outline: none;
+            cursor: pointer;
+        }
+
+            /* Style for select menu arrow */
+            select::after {
+                content: '\25BC';
+                position: absolute;
+                top: 50%;
+                right: 10px;
+                transform: translateY(-50%);
+                color: #555;
+            }
+        /* Style for select menu label */
+        label[for="courses"] {
+            display: block;
+            margin-bottom: 6px;
+            text-align: center;
+            font-size: 18px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <h1>Update Evaluations</h1>
+    <br />
+    <h4>Evaluation Type: @selectedEval </h4>
+    <table>
+        <thead>
+            <tr>
+                <th>Roll No.</th>
+                <th>Score</th>
+                <th>Max Score</th>
+                <th>Evaluation Date</th>
+                <th>Updated Score</th>
+            </tr>
+        </thead>
+        <tbody>
+
+
+
+            @foreach (var row in EvalSystem)
+            {
+                <tr>
+                    <td>
+                        @row.Roll_No
+                    </td>
+                    <td>  @row.SCORE </td>
+
+
+                    <td>
+                        @row.MaxScore
+
+                    </td>
+                    <td>@row.EvalDate</td>
+
+                    <td>
+                        <select @onchange="(ChangeEventArgs e) => EvalArray[row.Roll_No] = e.Value.ToString()">
+                            <option value="@row.SCORE">--</option>
+                            @for (int i = 0; i <= int.Parse(row.MaxScore); i++)
+                            {
+                                <option value="@i">@i</option>
+                            }
+                        </select>
+
+                    </td>
+
+
+                </tr>
+
+
+            }
+
+
+        </tbody>
+    </table>
+    <div class="login-container">
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" Class="login-button" OnClick="@UpdateEval">Update</MudButton>
+    </div>
+
+
+</body>
+</html>
+
+
+@code{
+    //string[] AttendanceArray = new string[300];
+    Dictionary<string, string> EvalArray = new Dictionary<string, string>();
+
+    public int arrCounter = 0;
+    int arrsize;
+    string currentUserName;
+    public string selected { get; set; }
+    public string selectedEval { get; set; }
+
+    List<GetCurrentEvaluationModel> EvalSystem = new List<GetCurrentEvaluationModel>();
+    GetCurrentEvaluationModel system = new GetCurrentEvaluationModel();
+
+    protected async override Task OnInitializedAsync()
+    {
+
+        ApiRequest.http = http;
+        ApiRequest.jsr = jsr;
+        var authstates = await authstate.GetAuthenticationStateAsync();
+        currentUserName = authstates.User.Identity.Name;
+
+        var uri = new Uri(NavigationManager.Uri);
+        var queryString = QueryHelpers.ParseQuery(uri.Query);
+
+        selected = queryString["selectedCourse"];
+        selectedEval = queryString["selectedEval"];
+
+
+
+        EvalSystem = await http.GetFromJsonAsync<List<GetCurrentEvaluationModel>>($"api/FacultyDashboard/GetCurrentEvaluations/{currentUserName}/{selectedEval}");
+        foreach (var row in EvalSystem)
+        {
+            EvalArray[row.Roll_No] = row.SCORE;
+
+        }
+
+    }
+    protected async Task UpdateEval()
+    {
+        //Add update query to controller and pass a model
+        //Then create a page for new evaluation
+        foreach (var item in EvalArray)
+        {
+            string rollNo = item.Key;
+            string score = item.Value;
+            system.FacultyID = currentUserName;
+            system.Roll_No = rollNo;
+            system.SCORE = score;
+            system.EvalType = selectedEval;
+            system.EvalDate = " ";
+
+            await jsr.InvokeVoidAsync("writeToFile", "hello.txt", "Evaluations updated by " + currentUserName + " at " + DateTime.Now.ToString() + "\n");
+            await ApiRequest.PostRequest<GetCurrentEvaluationModel>("api/FacultyDashboard/UpdateEvaluations", system);
+        }
+        NavigationManager.NavigateTo($"/FacultyHomepage");
+
+
+
+    }
+
+
+
+
+
+
+}

@@ -1,0 +1,348 @@
+﻿@page "/GetFacultyReport"
+@using Microsoft.AspNetCore.Components.Authorization
+@using Bismillah.Shared
+@*@using Microsoft.AspNetCore.Mvc;
+    @using Microsoft.AspNetCore.Mvc.RazorPages;*@
+@using Microsoft.AspNetCore.WebUtilities;
+@using MudBlazor
+@using System.Globalization;
+@inject AuthenticationStateProvider authstate
+@inject HttpClient http
+@inject IJSRuntime jsr
+@inject NavigationManager Navigation
+@inject NavigationManager NavigationManager
+<html>
+
+<head>
+    <style>
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 60px;
+            height: 34px;
+        }
+
+            .switch input {
+                display: none;
+            }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            -webkit-transition: .4s;
+            transition: .4s;
+            border-radius: 17px;
+        }
+
+            .slider:before {
+                position: absolute;
+                content: "";
+                height: 26px;
+                width: 26px;
+                left: 4px;
+                bottom: 4px;
+                background-color: white;
+                -webkit-transition: .4s;
+                transition: .4s;
+                border-radius: 50%;
+            }
+
+        input:checked + .slider {
+            background-color: #2196F3;
+        }
+
+        input:focus + .slider {
+            box-shadow: 0 0 1px #2196F3;
+        }
+
+        input:checked + .slider:before {
+            -webkit-transform: translateX(26px);
+            -ms-transform: translateX(26px);
+            transform: translateX(26px);
+        }
+
+        /* Style for table */
+        table {
+            border-collapse: collapse;
+            width: 100%;
+        }
+
+
+        th, td {
+            text-align: left;
+            padding: 8px;
+            border: 1px solid #ddd;
+        }
+
+        th {
+            background-color: #4285f4;
+            color: white;
+        }
+
+        .add-attendance-button {
+            background-color: #007bff;
+            border: none;
+            color: white;
+            padding: 0.5rem 1rem;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+            .add-attendance-button:hover {
+                background-color: #0062cc;
+            }
+
+        .center {
+            text-align: center;
+        }
+        /* Style for select menu */
+        select {
+            width: 50%;
+            padding: 8px 16px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+            margin-bottom: 12px;
+            margin-left: auto;
+            margin-right: auto;
+            display: block;
+            font-size: 16px;
+            color: #555;
+            background-color: #fff;
+            appearance: none;
+            outline: none;
+            cursor: pointer;
+        }
+
+            /* Style for select menu arrow */
+            select::after {
+                content: '\25BC';
+                position: absolute;
+                top: 50%;
+                right: 10px;
+                transform: translateY(-50%);
+                color: #555;
+            }
+
+        /* Style for select menu label */
+        label[for="courses"] {
+            display: block;
+            margin-bottom: 6px;
+            text-align: center;
+            font-size: 18px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    @if (selectedReport == "Attendance")
+    {
+        <h3>
+            Attendance Report
+        </h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>Roll No</th>
+                    <th>Name</th>
+                    <th>Attendance Percentage</th>
+
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var row in ReportOne)
+                {
+                    <tr>
+                        <td>@row.Roll_NO</td>
+                        <td>@row.First_Name @row.Last_Name</td>
+                        <td>@row.Attendance_Percentage %</td>
+
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+    else if (selectedReport == "Eval")
+    {
+
+        <h3>
+            Evaluation Report
+        </h3>
+        <select id="courses" name="courses" @onchange="SelectionChanged">
+            <option value="@StudentList.ToList()[0].Roll_NO">Select Student...</option>
+            @foreach (var row in StudentList)
+            {
+                <option value="@row.Roll_NO">@row.Roll_NO - @row.First_Name @row.Last_Name</option>
+            }
+
+        </select>
+        totalScore = 0;
+        MAXSCORE = 0;
+        <table>
+            <thead>
+                <tr>
+                    <th>Evaluation Type</th>
+                    <th>Score</th>
+                    <th>Max Score</th>
+
+                </tr>
+            </thead>
+            <tbody>
+
+                @foreach (var row in ReportTwo)
+                {
+                    <tr>
+                        <td>@row.EvalType</td>
+                        <td>@row.SCORE</td>
+                        <td>@row.MaxScore</td>
+                    </tr>
+
+                    totalScore += int.Parse(row.SCORE);
+                    MAXSCORE += int.Parse(row.MaxScore);
+
+                }
+                <tr>
+                    <td>Total Score</td>
+                    <td>@totalScore</td>
+                    <td>@MAXSCORE</td>
+                </tr>
+            </tbody>
+        </table>
+    }
+    else if (selectedReport == "Grade")
+    {
+        <h3>
+            Grade Report
+        </h3>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Roll No</th>
+                    <th>Course ID</th>
+                    <th>Grade</th>
+
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var row in ReportThree)
+                {
+                    <tr>
+                        <td>@row.Roll_NO</td>
+                        <td>@row.Course_ID</td>
+                        <td>@row.Grade</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+
+
+    }
+    else if (selectedReport == "CGrade")
+    {
+        <h3>
+            Count of Grades Report
+        </h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>Grade</th>
+                    <th>Count</th>
+
+
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var row in ReportFour)
+                {
+                    <tr>
+                        <td>@row.Grade</td>
+                        <td>@row.GradeCount</td>
+
+                    </tr>
+                }
+            </tbody>
+        </table>
+
+
+    }
+
+    <br />
+    <div class="center">
+        <button @onclick="() => NavigateToAddNewCourse()" class="add-attendance-button">Go Back</button>
+
+    </div>
+
+</body>
+</html>
+
+
+
+
+@code{
+    string studentUserName;
+    List<FacultyReportOne> ReportOne = new List<FacultyReportOne>();
+    List<FacultyReportTwo> ReportTwo = new List<FacultyReportTwo>();
+    List<FacultyReportThree> ReportThree = new List<FacultyReportThree>();
+    List<FacultyReportFour> ReportFour = new List<FacultyReportFour>();
+    List<GetStudentList> StudentList = new List<GetStudentList>();
+    int totalScore = 0;
+    int MAXSCORE = 0;
+    string currentUserName;
+    string selectedReport;
+    string temp;
+    protected async override Task OnInitializedAsync()
+    {
+
+        //OfferedCourses = await http.GetFromJsonAsync<List<GetOfferedCourses>>($"api/AdminDashboard/GetOfferedCourses");
+        //Details = await http.GetFromJsonAsync<List<FacultyDetails>>($"api/AdminDashboard/GetFacultyDetails");
+
+        ApiRequest.http = http;
+        ApiRequest.jsr = jsr;
+        var authstates = await authstate.GetAuthenticationStateAsync();
+        currentUserName = authstates.User.Identity.Name;
+
+        var uri = new Uri(NavigationManager.Uri);
+        var queryString = QueryHelpers.ParseQuery(uri.Query);
+        selectedReport = queryString["selectedReport"];
+
+        ReportOne = await http.GetFromJsonAsync<List<FacultyReportOne>>($"api/FacultyDashboard/AttendanceSheetReport/{currentUserName}");
+        foreach(var row in ReportOne)
+        {
+            temp = "";
+            for (int i = 0; i < 5; i++)
+            {
+                temp += row.Attendance_Percentage[i];
+            }
+            row.Attendance_Percentage = temp;
+        }
+
+    
+    ReportThree = await http.GetFromJsonAsync<List<FacultyReportThree>>($"api/FacultyDashboard/GradeReport/{currentUserName}");
+    ReportFour = await http.GetFromJsonAsync<List<FacultyReportFour>>($"api/FacultyDashboard/CountOfGradesReport/{currentUserName}");
+
+    StudentList = await http.GetFromJsonAsync<List<GetStudentList>>($"api/FacultyDashboard/GetStudentList/{currentUserName}");
+    }
+    private async Task SelectionChanged(ChangeEventArgs args)
+    {
+        totalScore = 0;
+        MAXSCORE = 0;
+        studentUserName = args.Value.ToString();
+        ReportTwo = await http.GetFromJsonAsync<List<FacultyReportTwo>>($"api/FacultyDashboard/EvaluationReport/{currentUserName}/{studentUserName}");
+
+    }
+    private void NavigateToAddNewCourse()
+    {
+        NavigationManager.NavigateTo($"/FacultyReports");
+
+    }
+
+    }

@@ -1,0 +1,282 @@
+﻿@page "/ManageStudents"
+@using Microsoft.AspNetCore.Components.Authorization
+@using Bismillah.Shared
+@*@using Microsoft.AspNetCore.Mvc;
+    @using Microsoft.AspNetCore.Mvc.RazorPages;*@
+@using Microsoft.AspNetCore.WebUtilities;
+@using MudBlazor
+@using System.Globalization;
+@inject AuthenticationStateProvider authstate
+@inject HttpClient http
+@inject IJSRuntime jsr
+@inject NavigationManager Navigation
+@inject NavigationManager NavigationManager
+
+
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Feedback Table</title>
+    <style>
+        /* Style for table */
+        table {
+            border-collapse: collapse;
+            width: 100%;
+        }
+
+
+        th, td {
+            text-align: left;
+            padding: 8px;
+            border: 1px solid #ddd;
+        }
+
+        th {
+            background-color: #4285f4;
+            color: white;
+        }
+
+        /* Style for radio buttons */
+        input[type="radio"] {
+            margin: 0;
+            padding: 0;
+            width: 18px;
+            height: 18px;
+        }
+
+            /* Hide radio button */
+            input[type="radio"] + label {
+                display: inline-block;
+                vertical-align: top;
+                /*        margin-left: -18px;*/
+                padding-left: 0;
+                line-height: 1.6;
+            }
+
+            /* Style for selected radio button */
+            input[type="radio"]:checked + label {
+                background-color: #4CAF50;
+                color: white;
+            }
+        /* Style for select menu */
+        select {
+            width: 50%;
+            padding: 8px 16px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+            margin-bottom: 12px;
+            margin-left: auto;
+            margin-right: auto;
+            display: block;
+            font-size: 16px;
+            color: #555;
+            background-color: #fff;
+            appearance: none;
+            outline: none;
+            cursor: pointer;
+        }
+
+            /* Style for select menu arrow */
+            select::after {
+                content: '\25BC';
+                position: absolute;
+                top: 50%;
+                right: 10px;
+                transform: translateY(-50%);
+                color: #555;
+            }
+
+        /* Style for select menu label */
+        label[for="courses"] {
+            display: block;
+            margin-bottom: 6px;
+            text-align: center;
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+        .login-container button {
+            display: block;
+            width: 100%;
+            padding: 10px;
+            border: none;
+            border-radius: 5px;
+            background: #007bff;
+            color: #fff;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+            .login-container button:hover {
+                background: #0062cc;
+            }
+
+        .comment-box {
+            width: 500px;
+            margin: 0 auto;
+            background-color: #f2f2f2;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+        }
+
+            .comment-box h3 {
+                margin-top: 0;
+            }
+
+            .comment-box textarea {
+                width: 100%;
+                height: 100px;
+                padding: 10px;
+                margin-bottom: 10px;
+                border: none;
+                background-color: #fff;
+                border-radius: 5px;
+                box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+            }
+
+            .comment-box input[type="submit"] {
+                background-color: #4CAF50;
+                color: #fff;
+                border: none;
+                padding: 10px 20px;
+                border-radius: 5px;
+                cursor: pointer;
+                transition: all 0.3s ease-in-out;
+            }
+
+                .comment-box input[type="submit"]:hover {
+                    background-color: #3e8e41;
+                }
+    </style>
+</head>
+<body>
+    <h1>Manage Students</h1>
+    <br />
+    <h3>Course ID: @selected</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>Roll No.</th>
+                <th>Student Name</th>
+                <th>Program</th>
+                <th>Update Program</th>
+                <th>Section</th>
+                <th>Update Section</th>
+            </tr>
+        </thead>
+        <tbody>
+
+
+
+            @foreach (var row in RegisteredStudents)
+            {
+                <tr>
+                    <td>
+                        @row.Roll_no
+                    </td>
+                    <td>  @row.First_name @row.Last_name</td>
+
+
+
+                    <td>
+                        @row.Program
+
+
+
+
+                    </td>
+                    <td>
+                        <select @onchange="(ChangeEventArgs e) => ProgramArray[row.Roll_no] = e.Value.ToString()">
+
+                            <option value=@row.Program>--</option>
+                            <option value="CS">CS</option>
+                            <option value="CYS">CYS</option>
+                            <option value="AI">AI</option>
+                            <option value="DS">DS</option>
+                        </select>
+                    </td>
+                    <td>
+                        @row.Section
+                    </td>
+                    <td>
+                        <select @onchange="(ChangeEventArgs e) => SectionArray[row.Roll_no] = e.Value.ToString()">
+
+                            <option value=@row.Section>--</option>
+                            <option value="A">A</option>
+                            <option value="B">B</option>
+                            <option value="C">C</option>
+                            <option value="D">D</option>
+                            <option value="E">E</option>
+                            <option value="F">F</option>
+                            <option value="G">G</option>
+                        </select>
+                    </td>
+                </tr>
+
+
+            }
+
+
+        </tbody>
+    </table>
+    <br />
+    <div class="login-container">
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" Class="login-button" OnClick="@Update">Submit</MudButton>
+    </div>
+</body>
+</html>
+
+@code{
+    Dictionary<string, string> ProgramArray = new Dictionary<string, string>();
+    Dictionary<string, string> SectionArray = new Dictionary<string, string>();
+    List<ManageStudentsAdminModel> RegisteredStudents = new List<ManageStudentsAdminModel>();
+    string selected;
+    UpdateModel system = new UpdateModel();
+    protected async override Task OnInitializedAsync()
+    {
+        ApiRequest.http = http;
+        ApiRequest.jsr = jsr;
+        var uri = new Uri(NavigationManager.Uri);
+        var queryString = QueryHelpers.ParseQuery(uri.Query);
+        selected = queryString["selectedCourse"];
+
+        RegisteredStudents = await http.GetFromJsonAsync<List<ManageStudentsAdminModel>>($"api/AdminDashboard/GetRegisteredStudentsForAdmin/{selected}");
+
+        foreach (var row in RegisteredStudents)
+        {
+            ProgramArray[row.Roll_no] = row.Program;
+            ProgramArray[row.Section] = row.Section;
+        }
+    }
+
+    protected async Task Update()
+    {
+
+        foreach (var item in ProgramArray)
+        {
+            string rollNo = item.Key;
+            string program = item.Value;
+            system.Program = program;
+            system.Roll_No = rollNo;
+            await ApiRequest.PostRequest<SuccessMessageModel>("api/AdminDashboard/UpdateProgram", system);
+        }
+
+        foreach (var item in SectionArray)
+        {
+            string rollNo = item.Key;
+            string program = item.Value;
+            system.Program = program;
+            system.Roll_No = rollNo;
+            await ApiRequest.PostRequest<SuccessMessageModel>("api/AdminDashboard/UpdateSection", system);
+        }
+
+
+        NavigationManager.NavigateTo($"/CourseRegAdmin");
+
+
+    }
+
+}

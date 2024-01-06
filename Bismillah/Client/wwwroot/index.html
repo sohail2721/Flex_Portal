@@ -1,0 +1,101 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>Flex Portal</title>
+    <base href="/" />
+    <link href="css/bootstrap/bootstrap.min.css" rel="stylesheet" />
+    <link href="css/app.css" rel="stylesheet" />
+    <link rel="icon" type="image/png" href="favicon.png" />
+    <link href="Bismillah.Client.styles.css" rel="stylesheet" />
+</head>
+
+
+<body>
+    <div id="app">
+        <svg class="loading-progress">
+            <circle r="40%" cx="50%" cy="50%" />
+            <circle r="40%" cx="50%" cy="50%" />
+        </svg>
+        <div class="loading-progress-text"></div>
+    </div>
+
+    <div id="blazor-error-ui">
+        An unhandled error has occurred.
+        <a href="" class="reload">Reload</a>
+        <a class="dismiss">🗙</a>
+    </div>
+    <script src="_framework/blazor.webassembly.js"></script>
+    <script>var db;
+        var request = indexedDB.open("MyDatabase");
+
+        request.onerror = function (event) {
+            console.log("Error opening database");
+        };
+
+        request.onupgradeneeded = function (event) {
+            var db = event.target.result;
+            var objectStore = db.createObjectStore("files", { keyPath: "id" });
+        };
+
+        request.onsuccess = function (event) {
+            db = event.target.result;
+        };
+
+        function writeToFile(filename, content) {
+            var transaction = db.transaction(["files"], "readwrite");
+            var objectStore = transaction.objectStore("files");
+
+            // Check if file already exists
+            var request = objectStore.get(filename);
+            request.onsuccess = function (event) {
+                var existingFile = event.target.result;
+
+                if (existingFile) {
+                    // File exists, update content
+                    existingFile.content += content;
+                    var updateRequest = objectStore.put(existingFile);
+                    updateRequest.onerror = function (event) {
+                        console.log("Error updating file in database");
+                    };
+                } else {
+                    // File doesn't exist, create new file
+                    var file = { id: filename, content: content };
+                    var addRequest = objectStore.add(file);
+                    addRequest.onerror = function (event) {
+                        console.log("Error adding file to database");
+                    };
+                }
+            };
+
+            request.onerror = function (event) {
+                console.log("Error checking if file exists in database");
+            };
+        }
+
+        function readFromFile(filename) {
+            return new Promise(function (resolve, reject) {
+                var transaction = db.transaction(["files"], "readonly");
+                var objectStore = transaction.objectStore("files");
+                var request = objectStore.get(filename);
+                request.onerror = function (event) {
+                    console.log("Error reading file from database");
+                    reject(event.target.error);
+                };
+                request.onsuccess = function (event) {
+                    if (request.result) {
+                        resolve(request.result.content);
+                    } else {
+                        reject(new Error("File not found in database"));
+                    }
+                };
+            });
+        }</script>
+
+
+</body>
+
+</html>
+

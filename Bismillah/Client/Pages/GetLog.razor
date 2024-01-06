@@ -1,0 +1,47 @@
+﻿@page "/GetLog"
+@using Microsoft.AspNetCore.Components.Authorization
+@using Bismillah.Shared
+@inject AuthenticationStateProvider authstate
+@inject HttpClient http
+@inject IJSRuntime jsr
+@inject NavigationManager Navigation
+@inject NavigationManager NavigationManager
+<!DOCTYPE html>
+<html lang="en">
+<head>
+
+</head>
+<body>
+    <h1>Log Reports</h1>
+    <p1>@fileContent</p1>
+
+    <br />
+
+    <footer>
+        <div class="footer-container">
+            <p>&copy; 2023 Student Portal. All rights reserved.</p>
+        </div>
+    </footer>
+
+</body>
+</html>
+
+
+@code{
+    string currentUserName;
+
+    string fileContent;
+    protected async override Task OnInitializedAsync()
+    {
+        ApiRequest.http = http;
+        ApiRequest.jsr = jsr;
+        
+
+        fileContent = await jsr.InvokeAsync<string>("readFromFile", "hello.txt");
+        //Console.WriteLine(fileContent);
+
+
+    }
+
+
+}

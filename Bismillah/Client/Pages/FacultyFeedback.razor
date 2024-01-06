@@ -1,0 +1,779 @@
+﻿@page "/FacultyFeedback"
+@using Microsoft.AspNetCore.Components.Authorization
+@using Bismillah.Shared
+@using MudBlazor
+@using System.IO
+@using Microsoft.AspNetCore.Http;
+@using System.Threading
+@inject AuthenticationStateProvider authstate
+@inject HttpClient http
+@inject IJSRuntime jsr
+@inject NavigationManager Navigation
+@inject NavigationManager NavigationManager
+@inject IConfiguration Configuration
+
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Feedback Table</title>
+    <style>
+        /* Style for table */
+        table {
+            border-collapse: collapse;
+            width: 100%;
+        }
+
+
+        th, td {
+            text-align: left;
+            padding: 8px;
+            border: 1px solid #ddd;
+        }
+
+        th {
+            background-color: #4285f4;
+            color: white;
+        }
+
+        /* Style for radio buttons */
+        input[type="radio"] {
+            margin: 0;
+            padding: 0;
+            width: 18px;
+            height: 18px;
+        }
+
+            /* Hide radio button */
+            input[type="radio"] + label {
+                display: inline-block;
+                vertical-align: top;
+                /*        margin-left: -18px;*/
+                padding-left: 0;
+                line-height: 1.6;
+            }
+
+            /* Style for selected radio button */
+            input[type="radio"]:checked + label {
+                background-color: #4CAF50;
+                color: white;
+            }
+        /* Style for select menu */
+        select {
+            width: 50%;
+            padding: 8px 16px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+            margin-bottom: 12px;
+            margin-left: auto;
+            margin-right: auto;
+            display: block;
+            font-size: 16px;
+            color: #555;
+            background-color: #fff;
+            appearance: none;
+            outline: none;
+            cursor: pointer;
+        }
+
+            /* Style for select menu arrow */
+            select::after {
+                content: '\25BC';
+                position: absolute;
+                top: 50%;
+                right: 10px;
+                transform: translateY(-50%);
+                color: #555;
+            }
+
+        /* Style for select menu label */
+        label[for="courses"] {
+            display: block;
+            margin-bottom: 6px;
+            text-align: center;
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+        .login-container button {
+            display: block;
+            width: 100%;
+            padding: 10px;
+            border: none;
+            border-radius: 5px;
+            background: #007bff;
+            color: #fff;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+            .login-container button:hover {
+                background: #0062cc;
+            }
+
+        .comment-box {
+            width: 500px;
+            margin: 0 auto;
+            background-color: #f2f2f2;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+        }
+
+            .comment-box h3 {
+                margin-top: 0;
+            }
+
+            .comment-box textarea {
+                width: 100%;
+                height: 100px;
+                padding: 10px;
+                margin-bottom: 10px;
+                border: none;
+                background-color: #fff;
+                border-radius: 5px;
+                box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+            }
+
+            .comment-box input[type="submit"] {
+                background-color: #4CAF50;
+                color: #fff;
+                border: none;
+                padding: 10px 20px;
+                border-radius: 5px;
+                cursor: pointer;
+                transition: all 0.3s ease-in-out;
+            }
+
+                .comment-box input[type="submit"]:hover {
+                    background-color: #3e8e41;
+                }
+    </style>
+</head>
+<body>
+    <h1>Feedbacks Recieved</h1>
+
+    @*<label for="courses">Select Course:</label>
+        <select id="courses" name="courses" @onchange="SelectionChanged">
+            <option value="NULL">Select a course...</option>
+            @foreach (var row in CoursesInfo)
+            {
+                <option value="@row.Course_ID">@row.Course_ID - @row.Course_Name</option>
+            }
+
+        </select>*@
+
+    <h3>Appearance and Personal Presentation</h3>
+
+    <table>
+        <tr>
+            <th>Question</th>
+            @for (int i = 0; i < numericValue; i++)
+            {
+                <th>Feedback @(i+1)</th>
+            }
+        </tr>
+        <tr>
+            <td>1.Teacher attends class in a well presentable manner.</td>
+            @foreach (var row in RecievedFeedbacks)
+            {
+
+
+                @if (@row.Question1Response == "0")
+                {
+                    <td> Strongly Agree</td>
+                }
+                else if (@row.Question1Response == "1")
+                {
+                    <td> Agree</td>
+                }
+                else if (@row.Question1Response == "2")
+                {
+                    <td> Neutral</td>
+                }
+                else if (@row.Question1Response == "3")
+                {
+                    <td> Disagree</td>
+                }
+                else if (@row.Question1Response == "4")
+                {
+                    <td> Strongly Disagree</td>
+                }
+
+            }
+        </tr>
+        <tr>
+            <td>2. Teacher shows enthusiasm when teaching in class.</td>
+            @foreach (var row in RecievedFeedbacks)
+            {
+                @if (@row.Question2Response == "0")
+                {
+                    <td> Strongly Agree</td>
+                }
+                else if (@row.Question2Response == "1")
+                {
+                    <td> Agree</td>
+                }
+                else if (@row.Question2Response == "2")
+                {
+                    <td> Neutral</td>
+                }
+                else if (@row.Question2Response == "3")
+                {
+                    <td> Disagree</td>
+                }
+                else if (@row.Question2Response == "4")
+                {
+                    <td> Strongly Disagree</td>
+                }
+            }
+        </tr>
+        <tr>
+            <td>3. Teacher shows initiative and flexibility in teaching. </td>
+            @foreach (var row in RecievedFeedbacks)
+            {
+                @if (@row.Question3Response == "0")
+                {
+                    <td> Strongly Agree</td>
+                }
+                else if (@row.Question3Response == "1")
+                {
+                    <td> Agree</td>
+                }
+                else if (@row.Question3Response == "2")
+                {
+                    <td> Neutral</td>
+                }
+                else if (@row.Question3Response == "3")
+                {
+                    <td> Disagree</td>
+                }
+                else if (@row.Question3Response == "4")
+                {
+                    <td> Strongly Disagree</td>
+                }
+            }
+        </tr>
+        <tr>
+            <td>4. Teacher is well articulated and shows full knowledge of the subject in teaching.</td>
+            @foreach (var row in RecievedFeedbacks)
+            {
+                @if (@row.Question4Response == "0")
+                {
+                    <td> Strongly Agree</td>
+                }
+                else if (@row.Question4Response == "1")
+                {
+                    <td> Agree</td>
+                }
+                else if (@row.Question4Response == "2")
+                {
+                    <td> Neutral</td>
+                }
+                else if (@row.Question4Response == "3")
+                {
+                    <td> Disagree</td>
+                }
+                else if (@row.Question4Response == "4")
+                {
+                    <td> Strongly Disagree</td>
+                }
+            }
+
+        </tr>
+        <tr>
+            <td>5. Teacher speaks loud and clear enough to be heard by the whole class..</td>
+            @foreach (var row in RecievedFeedbacks)
+            {
+                @if (@row.Question5Response == "0")
+                {
+                    <td> Strongly Agree</td>
+                }
+                else if (@row.Question5Response == "1")
+                {
+                    <td> Agree</td>
+                }
+                else if (@row.Question5Response == "2")
+                {
+                    <td> Neutral</td>
+                }
+                else if (@row.Question5Response == "3")
+                {
+                    <td> Disagree</td>
+                }
+                else if (@row.Question5Response == "4")
+                {
+                    <td> Strongly Disagree</td>
+                }
+            }
+        </tr>
+    </table>
+    <br><br>
+
+
+    <h3>Professional Practices</h3>
+
+    <table>
+        <tr>
+            <th>Question</th>
+            @for (int i = 0; i < numericValue; i++)
+            {
+                <th>Feedback @(i+1)</th>
+            }
+        </tr>
+        <tr>
+            <td>1.Teacher shows professionalism in class.</td>
+            @foreach (var row in RecievedFeedbacks)
+            {
+                @if (@row.Question6Response == "0")
+                {
+                    <td> Strongly Agree</td>
+                }
+                else if (@row.Question6Response == "1")
+                {
+                    <td> Agree</td>
+                }
+                else if (@row.Question6Response == "2")
+                {
+                    <td> Neutral</td>
+                }
+                else if (@row.Question6Response == "3")
+                {
+                    <td> Disagree</td>
+                }
+                else if (@row.Question6Response == "4")
+                {
+                    <td> Strongly Disagree</td>
+                }
+            }
+        </tr>
+        <tr>
+            <td>2. Teacher shows enthusiasm when teaching in class.</td>
+            @foreach (var row in RecievedFeedbacks)
+            {
+                @if (@row.Question7Response == "0")
+                {
+                    <td> Strongly Agree</td>
+                }
+                else if (@row.Question7Response == "1")
+                {
+                    <td> Agree</td>
+                }
+                else if (@row.Question7Response == "2")
+                {
+                    <td> Neutral</td>
+                }
+                else if (@row.Question7Response == "3")
+                {
+                    <td> Disagree</td>
+                }
+                else if (@row.Question7Response == "4")
+                {
+                    <td> Strongly Disagree</td>
+                }
+            }
+
+        </tr>
+        <tr>
+            <td>3. Teacher encourages students to engage in class discussions and ask questions. </td>
+            @foreach (var row in RecievedFeedbacks)
+            {
+                @if (@row.Question8Response == "0")
+                {
+                    <td> Strongly Agree</td>
+                }
+                else if (@row.Question8Response == "1")
+                {
+                    <td> Agree</td>
+                }
+                else if (@row.Question8Response == "2")
+                {
+                    <td> Neutral</td>
+                }
+                else if (@row.Question8Response == "3")
+                {
+                    <td> Disagree</td>
+                }
+                else if (@row.Question8Response == "4")
+                {
+                    <td> Strongly Disagree</td>
+                }
+            }
+        </tr>
+        <tr>
+            <td>4. Teacher handles criticisms and suggestions professionally.</td>
+            @foreach (var row in RecievedFeedbacks)
+            {
+                @if (@row.Question9Response == "0")
+                {
+                    <td> Strongly Agree</td>
+                }
+                else if (@row.Question9Response == "1")
+                {
+                    <td> Agree</td>
+                }
+                else if (@row.Question9Response == "2")
+                {
+                    <td> Neutral</td>
+                }
+                else if (@row.Question9Response == "3")
+                {
+                    <td> Disagree</td>
+                }
+                else if (@row.Question9Response == "4")
+                {
+                    <td> Strongly Disagree</td>
+                }
+            }
+        </tr>
+        <tr>
+            <td>5.Teacher comes to class on time.</td>
+            @foreach (var row in RecievedFeedbacks)
+            {
+                @if (@row.Question10Response == "0")
+                {
+                    <td> Strongly Agree</td>
+                }
+                else if (@row.Question10Response == "1")
+                {
+                    <td> Agree</td>
+                }
+                else if (@row.Question10Response == "2")
+                {
+                    <td> Neutral</td>
+                }
+                else if (@row.Question10Response == "3")
+                {
+                    <td> Disagree</td>
+                }
+                else if (@row.Question10Response == "4")
+                {
+                    <td> Strongly Disagree</td>
+                }
+            }
+        </tr>
+    </table>
+    <br><br>
+
+    <h3>Teaching Methods</h3>
+
+    <table>
+        <tr>
+            <th>Question</th>
+            @for (int i = 0; i < numericValue; i++)
+            {
+                <th>Feedback @(i+1)</th>
+            }
+        </tr>
+        <tr>
+            <td>1. Teacher shows well rounded knowledge over the subject matter.</td>
+            @foreach (var row in RecievedFeedbacks)
+            {
+                @if (@row.Question11Response == "0")
+                {
+                    <td> Strongly Agree</td>
+                }
+                else if (@row.Question11Response == "1")
+                {
+                    <td> Agree</td>
+                }
+                else if (@row.Question11Response == "2")
+                {
+                    <td> Neutral</td>
+                }
+                else if (@row.Question11Response == "3")
+                {
+                    <td> Disagree</td>
+                }
+                else if (@row.Question11Response == "4")
+                {
+                    <td> Strongly Disagree</td>
+                }
+            }
+
+        </tr>
+        <tr>
+            <td>2. Teacher has organized the lesson conducive for easy understanding of students.</td>
+            @foreach (var row in RecievedFeedbacks)
+            {
+                @if (@row.Question12Response == "0")
+                {
+                    <td> Strongly Agree</td>
+                }
+                else if (@row.Question12Response == "1")
+                {
+                    <td> Agree</td>
+                }
+                else if (@row.Question12Response == "2")
+                {
+                    <td> Neutral</td>
+                }
+                else if (@row.Question12Response == "3")
+                {
+                    <td> Disagree</td>
+                }
+                else if (@row.Question12Response == "4")
+                {
+                    <td> Strongly Disagree</td>
+                }
+            }
+
+        </tr>
+        <tr>
+            <td>3. Teacher shows dynamism and enthusiasm. </td>
+            @foreach (var row in RecievedFeedbacks)
+            {
+                @if (@row.Question13Response == "0")
+                {
+                    <td> Strongly Agree</td>
+                }
+                else if (@row.Question13Response == "1")
+                {
+                    <td> Agree</td>
+                }
+                else if (@row.Question13Response == "2")
+                {
+                    <td> Neutral</td>
+                }
+                else if (@row.Question13Response == "3")
+                {
+                    <td> Disagree</td>
+                }
+                else if (@row.Question13Response == "4")
+                {
+                    <td> Strongly Disagree</td>
+                }
+            }
+
+        </tr>
+        <tr>
+            <td>4. Teacher stimulates the critical thinking of students.</td>
+            @foreach (var row in RecievedFeedbacks)
+            {
+                @if (@row.Question14Response == "0")
+                {
+                    <td> Strongly Agree</td>
+                }
+                else if (@row.Question14Response == "1")
+                {
+                    <td> Agree</td>
+                }
+                else if (@row.Question14Response == "2")
+                {
+                    <td> Neutral</td>
+                }
+                else if (@row.Question14Response == "3")
+                {
+                    <td> Disagree</td>
+                }
+                else if (@row.Question14Response == "4")
+                {
+                    <td> Strongly Disagree</td>
+                }
+            }
+
+        </tr>
+        <tr>
+            <td>5. Teacher handles the class environment conducive for learning.</td>
+            @foreach (var row in RecievedFeedbacks)
+            {
+                @if (@row.Question15Response == "0")
+                {
+                    <td> Strongly Agree</td>
+                }
+                else if (@row.Question15Response == "1")
+                {
+                    <td> Agree</td>
+                }
+                else if (@row.Question15Response == "2")
+                {
+                    <td> Neutral</td>
+                }
+                else if (@row.Question15Response == "3")
+                {
+                    <td> Disagree</td>
+                }
+                else if (@row.Question15Response == "4")
+                {
+                    <td> Strongly Disagree</td>
+                }
+            }
+
+        </tr>
+    </table>
+    <br><br>
+
+    <h3>Disposition Towards Students</h3>
+
+    <table>
+        <tr>
+            <th>Question</th>
+            @for (int i = 0; i < numericValue; i++)
+            {
+                <th>Feedback @(i+1)</th>
+            }
+        </tr>
+        <tr>
+            <td>1. Teacher believes that students can learn from the class.</td>
+            @foreach (var row in RecievedFeedbacks)
+            {
+                @if (@row.Question16Response == "0")
+                {
+                    <td> Strongly Agree</td>
+                }
+                else if (@row.Question16Response == "1")
+                {
+                    <td> Agree</td>
+                }
+                else if (@row.Question16Response == "2")
+                {
+                    <td> Neutral</td>
+                }
+                else if (@row.Question16Response == "3")
+                {
+                    <td> Disagree</td>
+                }
+                else if (@row.Question16Response == "4")
+                {
+                    <td> Strongly Disagree</td>
+                }
+            }
+
+        </tr>
+        <tr>
+            <td>2. Teacher shows equal respect to various cultural backgrounds, individuals, religion, and race.</td>
+            @foreach (var row in RecievedFeedbacks)
+            {
+                @if (@row.Question17Response == "0")
+                {
+                    <td> Strongly Agree</td>
+                }
+                else if (@row.Question17Response == "1")
+                {
+                    <td> Agree</td>
+                }
+                else if (@row.Question17Response == "2")
+                {
+                    <td> Neutral</td>
+                }
+                else if (@row.Question17Response == "3")
+                {
+                    <td> Disagree</td>
+                }
+                else if (@row.Question17Response == "4")
+                {
+                    <td> Strongly Disagree</td>
+                }
+            }
+
+        </tr>
+        <tr>
+            <td>3. Teacher finds the students strengths as basis for growth and weaknesses for opportunities for improvement. </td>
+            @foreach (var row in RecievedFeedbacks)
+            {
+                @if (@row.Question18Response == "0")
+                {
+                    <td> Strongly Agree</td>
+                }
+                else if (@row.Question18Response == "1")
+                {
+                    <td> Agree</td>
+                }
+                else if (@row.Question18Response == "2")
+                {
+                    <td> Neutral</td>
+                }
+                else if (@row.Question18Response == "3")
+                {
+                    <td> Disagree</td>
+                }
+                else if (@row.Question18Response == "4")
+                {
+                    <td> Strongly Disagree</td>
+                }
+            }
+
+        </tr>
+        <tr>
+            <td>4. Teacher understands the weakness of a student and helps in the student's improvement.</td>
+            @foreach (var row in RecievedFeedbacks)
+            {
+                @if (@row.Question19Response == "0")
+                {
+                    <td> Strongly Agree</td>
+                }
+                else if (@row.Question19Response == "1")
+                {
+                    <td> Agree</td>
+                }
+                else if (@row.Question19Response == "2")
+                {
+                    <td> Neutral</td>
+                }
+                else if (@row.Question19Response == "3")
+                {
+                    <td> Disagree</td>
+                }
+                else if (@row.Question19Response == "4")
+                {
+                    <td> Strongly Disagree</td>
+                }
+            }
+
+        </tr>
+
+    </table>
+    <br />
+    <table>
+        <tr>
+            <th>Serial No.</th>
+            <th>Comments</th>
+        </tr>
+        @foreach (var row in RecievedFeedbacks)
+        {
+            <tr>
+                <td>@count1</td>
+                <td> @row.comments</td>
+
+            </tr>
+                count1++;
+            }
+
+    </table>
+    <br />
+
+</body>
+</html>
+
+
+@code{
+    string currentUserName;
+    string[] Feedbackoptions = new string[95];
+    string[] QAns { get; set; } = new string[19];
+    string comments;
+    int count = 0;
+    int count1 = 1;
+    int numericValue = 0;
+    List<FeedbackModelFaculty> RecievedFeedbacks = new List<FeedbackModelFaculty>();
+
+    protected async override Task OnInitializedAsync()
+    {
+        ApiRequest.http = http;
+        ApiRequest.jsr = jsr;
+        var authstates = await authstate.GetAuthenticationStateAsync();
+        currentUserName = authstates.User.Identity.Name;
+        var NumFeedbacks = await http.GetFromJsonAsync<List<string>>($"api/FacultyDashboard/GetNumFeedBacks/{currentUserName}");
+        string numericPart = new String(NumFeedbacks.ToList()[0].Where(Char.IsDigit).ToArray()); // extracts Number part from ID
+        numericValue = Int32.Parse(numericPart);
+        RecievedFeedbacks = await http.GetFromJsonAsync<List<FeedbackModelFaculty>>($"api/FacultyDashboard/GetRecievedFeedbackResponses/{currentUserName}");
+
+
+
+
+    }
+
+
+
+
+}

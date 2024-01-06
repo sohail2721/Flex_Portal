@@ -1,0 +1,219 @@
+﻿@page "/FacultyAttendancePortal"
+@using Microsoft.AspNetCore.Components.Authorization
+@using Bismillah.Shared
+@inject AuthenticationStateProvider authstate
+@inject HttpClient http
+@inject IJSRuntime jsr
+@inject NavigationManager Navigation
+@inject NavigationManager NavigationManager
+
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Attendance Portal</title>
+    <style>
+        /* Style for select menu */
+        select {
+            width: 50%;
+            padding: 8px 16px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+            margin-bottom: 12px;
+            margin-left: auto;
+            margin-right: auto;
+            display: block;
+            font-size: 16px;
+            color: #555;
+            background-color: #fff;
+            appearance: none;
+            outline: none;
+            cursor: pointer;
+        }
+
+            /* Style for select menu arrow */
+            select::after {
+                content: '\25BC';
+                position: absolute;
+                top: 50%;
+                right: 10px;
+                transform: translateY(-50%);
+                color: #555;
+            }
+        /* Style for select menu label */
+        label[for="courses"] {
+            display: block;
+            margin-bottom: 6px;
+            text-align: center;
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+
+
+        .add-attendance-button {
+            background-color: #007bff;
+            border: none;
+            color: white;
+            padding: 0.5rem 1rem;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+            .add-attendance-button:hover {
+                background-color: #0062cc;
+            }
+
+        .center {
+            text-align: center;
+        }
+
+        #my-alert {
+            position: fixed;
+            top: 80px;
+            right: 20px;
+            width: 300px;
+            background-color: #ffffff;
+            border: none;
+            border-radius: 4px;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+            transition: opacity 0.3s ease-in-out;
+            color: #fff;
+        }
+
+        .alert-container {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px;
+        }
+
+        .alert-text {
+            font-size: 16px;
+            color: #FFA500;
+        }
+
+        .close-button {
+            border: none;
+            background-color: transparent;
+            font-size: 16px;
+            color: #fff;
+            cursor: pointer;
+            transition: color 1.0s ease-in-out;
+        }
+
+            .close-button:hover {
+                color: #ccc;
+            }
+    </style>
+</head>
+<body>
+    <h1>Attendance Portal</h1>
+    <div id="my-alert" style="@($"display: {(showAlert ? "flex" : "none")}; opacity: {(showAlert ? 1 : 0)}")">
+        <div class="alert-container">
+            <span class="oi oi-warning alert-text"> Invalid Selection</span>
+            <button class="close-button" @onclick="() => HideAlert()">x</button>
+        </div>
+    </div>
+    <label for="courses">Select Course:</label>
+    <select id="courses" name="courses" @onchange="SelectionChanged">
+        <option value="NULL">Select a course...</option>
+
+        @foreach (var row in RegisteredCoursesData)
+        {
+            <option value="@row.Course_ID">@row.Course_ID - @row.Course_Name</option>
+        }
+
+    </select>
+
+
+    <div class="center">
+        <button @onclick="() => NavigateToAttendance(selectedCourse)" class="add-attendance-button">Add Attendance</button>
+        <button @onclick="() => NavigateToAttendanceUpdate(selectedCourse)" class="add-attendance-button">Update Attendance</button>
+    </div>
+
+
+
+</body>
+</html>
+
+@code{
+    string currentUserName;
+    private string selectedCourse;
+    private string selectedDate;
+    List<GetCoursesInfoModel> RegisteredCoursesData = new List<GetCoursesInfoModel>();
+    List<AttendanceDateListModel> UploadedDate = new List<AttendanceDateListModel>();
+    private bool showAlert = false;
+
+    protected async override Task OnInitializedAsync()
+    {
+        var authstates = await authstate.GetAuthenticationStateAsync();
+        currentUserName = authstates.User.Identity.Name;
+        RegisteredCoursesData = await http.GetFromJsonAsync<List<GetCoursesInfoModel>>($"api/FacultyDashboard/GetRegisteredCourses/{currentUserName}");
+        selectedCourse = "";
+    }
+
+    private async Task SelectionChanged(ChangeEventArgs args)
+    {
+        selectedCourse = args.Value.ToString();
+        UploadedDate = await http.GetFromJsonAsync<List<AttendanceDateListModel>>($"api/FacultyDashboard/GetUploadedAttendanceDates/{selectedCourse}/{currentUserName}");
+
+    }
+
+    private void SelectionChangedDate(ChangeEventArgs args)
+    {
+        selectedDate = args.Value.ToString();
+
+
+    }
+    private void ShowAlert()
+    {
+        showAlert = true;
+        StateHasChanged();
+    }
+
+    private void HideAlert()
+    {
+        showAlert = false;
+        StateHasChanged();
+    }
+    private async Task NavigateToAttendance(string selectedCourse)
+    {
+        if (selectedCourse == string.Empty)
+        {
+            ShowAlert();
+            await jsr.InvokeVoidAsync("eval", "document.getElementById('my-alert').style.display = 'block';");
+            // Set timer to hide alert after 5 seconds
+            await Task.Delay(3000);
+            HideAlert();
+        }
+        else
+        {
+            NavigationManager.NavigateTo($"/AddAttendance?selectedCourse={selectedCourse}");
+        }
+    }
+
+    private async Task NavigateToAttendanceUpdate(string selectedCourse)
+    {
+        if (selectedCourse == string.Empty)
+        {
+            ShowAlert();
+            await jsr.InvokeVoidAsync("eval", "document.getElementById('my-alert').style.display = 'block';");
+            // Set timer to hide alert after 5 seconds
+            await Task.Delay(3000);
+            HideAlert();
+        }
+        else
+        {
+            NavigationManager.NavigateTo($"/UpdateAttendance?selectedCourse={selectedCourse}");
+
+        }
+
+
+    }
+
+}

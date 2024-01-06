@@ -1,0 +1,222 @@
+﻿@page "/StudentHomepage"
+@using Microsoft.AspNetCore.Components.Authorization
+@using Bismillah.Shared
+@inject AuthenticationStateProvider authstate
+@inject HttpClient http
+@inject IJSRuntime jsr
+@inject NavigationManager Navigation
+@inject NavigationManager NavigationManager
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <style>
+        /* Reset CSS */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        /* Global styles */
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            font-size: 16px;
+            line-height: 1.5;
+            color: #333;
+            background-color: #f8f8f8;
+        }
+
+        a {
+            color: #007bff;
+            text-decoration: none;
+        }
+
+            a:hover {
+                text-decoration: underline;
+            }
+
+        ul {
+            list-style: none;
+        }
+
+        /* Header */
+        header {
+            background-color: #fff;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .header-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        table {
+            border-collapse: collapse;
+            width: 100%;
+        }
+
+        caption {
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin-bottom: 1rem;
+        }
+
+        th, td {
+            border: 1px solid #ddd;
+            padding: 0.5rem;
+        }
+
+        th {
+            background-color: #0062cc;
+            color: white;
+            text-align: left;
+        }
+
+        td:first-child {
+            font-weight: bold;
+            width: 30%;
+        }
+
+        td:last-child {
+            text-align: right;
+        }
+    </style>
+</head>
+<body>
+    <section class="hero">
+        <div class="hero-container">
+            <h2>Welcome Back @FirstName @LastName!</h2>
+            <p>Explore your courses, view your grades, manage your assignments with the all new FLEX Portal.</p>
+
+        </div>
+    </section>
+
+    <table>
+
+        <tbody>
+            <tr>
+                <th colspan="2">Personal Information</th>
+            </tr>
+            <tr>
+                <td>Name:</td>
+                <td>@First_Name @Last_Name</td>
+            </tr>
+
+            <tr>
+                <td>CNIC:</td>
+                <td>@CNIC</td>
+            </tr>
+            <tr>
+                <td>Email:</td>
+                <td>@Email</td>
+            </tr>
+            <tr>
+                <td>Date of Birth:</td>
+                <td>@temp</td>
+            </tr>
+
+            <tr>
+                <th colspan="2">University Information</th>
+            </tr>
+            <tr>
+                <td>Roll NO:</td>
+                <td>@Roll_No</td>
+            </tr>
+            <tr>
+                <td>Degree:</td>
+                <td>@Degree</td>
+            </tr>
+            <tr>
+                <td>Program:</td>
+                <td>@Program</td>
+            </tr>
+            <tr>
+                <td>Campus:</td>
+                <td>Islamabad</td>
+            </tr>
+            <tr>
+                <td>Status:</td>
+                <td>Regular</td>
+            </tr>
+            <tr>
+
+                <th colspan="2">Contact Information</th>
+            </tr>
+           
+            <tr>
+                <td>Phone Number:</td>
+                <td>@Phone</td>
+            </tr>
+            <tr>
+                <td>Parent Phone Number:</td>
+                <td>0900-78601</td>
+           
+            </tr>
+        </tbody>
+    </table>
+
+    <br />
+    <footer>
+        <div class="footer-container">
+            <p>&copy; 2023 Student Portal. All rights reserved.</p>
+        </div>
+    </footer>
+
+</body>
+</html>
+
+
+@code{
+    string currentUserName;
+    List<LoginModel> NameData = new List<LoginModel>();
+    List<StudentInformation> StudentInform = new List<StudentInformation>();
+
+    public string formattedDate;
+    public string FirstName { get; set; }
+    public string LastName { get; set; }
+
+    public string Roll_No { get; set; } = string.Empty;
+    public string First_Name { get; set; } = string.Empty;
+    public string Last_Name { get; set; } = string.Empty;
+    public string Degree { get; set; } = string.Empty;
+    public string Program { get; set; } = string.Empty;
+    public string Section { get; set; } = string.Empty;
+    public string CNIC { get; set; } = string.Empty;
+    public string Email { get; set; } = string.Empty;
+    public string Phone { get; set; } = string.Empty;
+    public string DOB { get; set; } = string.Empty;
+    public string FLEXPASSWORD { get; set; } = string.Empty;
+    string temp = "";
+    protected async override Task OnInitializedAsync()
+    {
+        var authstates = await authstate.GetAuthenticationStateAsync();
+        currentUserName = authstates.User.Identity.Name;
+        NameData = await http.GetFromJsonAsync<List<LoginModel>>($"api/Auth/student/{currentUserName}");
+        StudentInform = await http.GetFromJsonAsync<List<StudentInformation>>($"api/StudentDashboard/GetStudentInfo/{currentUserName}");
+        FirstName = NameData.ToList()[0].First_name;
+        LastName = NameData.ToList()[0].Last_name;
+        Phone = "0";
+        Roll_No = StudentInform.ToList()[0].Roll_No;
+        First_Name = StudentInform.ToList()[0].First_Name;
+        Last_Name = StudentInform.ToList()[0].Last_Name;
+        Degree = StudentInform.ToList()[0].Degree;
+        Program = StudentInform.ToList()[0].Program;
+        Section = StudentInform.ToList()[0].Section;
+        CNIC = StudentInform.ToList()[0].CNIC;
+        Email = StudentInform.ToList()[0].Email;
+        Phone += StudentInform.ToList()[0].Phone;
+        DOB = StudentInform.ToList()[0].DOB;
+        FLEXPASSWORD = StudentInform.ToList()[0].FLEXPASSWORD;
+
+        for (int i = 0; i < 11; i++)
+        {
+            temp += DOB[i];
+        }
+    }
+
+
+}
